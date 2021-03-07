@@ -110,17 +110,17 @@ tokens = {'+': TokenType.PLUS_TK,
           '<=': TokenType.LESS_OR_EQUAL_TK,
           '>=': TokenType.GREATER_OR_EQUAL_TK,
           '<>': TokenType.NOT_EQUAL,
-          ':': TokenType.COLON_TK,
           ':=': TokenType.ASSIGN_TK,
           ';': TokenType.SEMI_COLON_TK,
           ',': TokenType.COMMA_TK,
+          ':': TokenType.COLON_TK,
+          '.': TokenType.PERIOD_TK,
           '[': TokenType.OPEN_SQUARE_BRACKET_TK,
           ']': TokenType.CLOSE_SQUARE_BRACKET_TK,
           '(': TokenType.OPEN_PARENTHESIS_TK,
           ')': TokenType.CLOSE_PARENTHESIS_TK,
           '{': TokenType.OPEN_CURLY_BRACKET_TK,
           '}': TokenType.CLOSE_CURLY_BRACKET_TK,
-          '.': TokenType.PERIOD_TK,
           '#': TokenType.POUND_TK,
           'program': TokenType.PROGRAM_TK,
           'declare': TokenType.DECLARE_TK,
@@ -150,11 +150,11 @@ tokens = {'+': TokenType.PLUS_TK,
 #                                #
 def lex():
     global input_file, char_number, line_number
-    number_limit = 2**32 - 1
+    number_limit = 2 ** 32 - 1
     char = input_file.read(1)
     char_number += 1
 
-    while True:
+    while (True):
         while char == '\n' or char == ' ' or char == '\t':
             if char == '\n':
                 line_number += 1
@@ -170,29 +170,26 @@ def lex():
             while char.isdigit():
                 char = input_file.read(1)
                 if char.isalpha():
-                    print("Error_1 in line ", line_number, " char_number: ", char_number)  # MAKE A Def()
-                    exit()
+                    error("Variable names cannot start with numbers",line_number,char_number)
                 elif char.isdigit():
                     char_number += 1
                     tokenString += char
             if int(tokenString) < -number_limit or int(tokenString) > number_limit:
-                print("Error_2: Number <> 2^32 - 1")  # MAKE A Def()
-                exit()
+                error("Number can only be less than or greater than 2^32 - 1",line_number,char_number)
             input_file.seek(input_file.tell() - 1)
             return Token(TokenType.NUM_TK, tokenString, line_number, char_number)
+        
         # Identifier or Keyword
         elif char.isalpha():
             while char.isalpha() or char.isdigit():
                 if len(tokenString) > 30:
-                    print("Error_3 | MORE THAN 30 | in line ", line_number, " char_number: ",
-                          char_number)  # MAKE A Def()
-                    exit()
+                    error("More than 30",line_number,char_number)
                 char = input_file.read(1)
                 if char.isalpha() or char.isdigit():
                     char_number += 1
                     tokenString += char
-            input_file.seek(input_file.tell() - 1)  # Check Bound Words !!!
-            if tokenString in tokens:
+            input_file.seek(input_file.tell() - 1)
+            if tokenString in tokens: # Check Bound Words
                 return Token(tokens[tokenString], tokenString, line_number, char_number)
             else:
                 return Token(TokenType.ID_TK, tokenString, line_number, char_number)
@@ -206,6 +203,7 @@ def lex():
             return Token(TokenType.TIMES_TK, tokenString, line_number, char_number)
         elif char == '/':
             return Token(TokenType.DIV_TK, tokenString, line_number, char_number)
+        
         # Grouping Symbols
         elif char == '{':
             return Token(TokenType.OPEN_CURLY_BRACKET_TK, tokenString, line_number, char_number)
@@ -219,11 +217,13 @@ def lex():
             return Token(TokenType.OPEN_PARENTHESIS_TK, tokenString, line_number, char_number)
         elif char == ')':
             return Token(TokenType.CLOSE_PARENTHESIS_TK, tokenString, line_number, char_number)
+        
         # Delimiter
         elif char == ',':
             return Token(TokenType.COMMA_TK, tokenString, line_number, char_number)
         elif char == ';':
             return Token(TokenType.SEMI_COLON_TK, tokenString, line_number, char_number)
+        
         # Assignment
         elif char == ':':
             char = input_file.read(1)
@@ -231,8 +231,10 @@ def lex():
                 tokenString += char
                 char_number += 1
                 return Token(TokenType.ASSIGN_TK, tokenString, line_number, char_number)
-            input_file.seek(input_file.tell() - 1)
-            return Token(TokenType.PERIOD_TK, tokenString, line_number, char_number)
+            else:
+                input_file.seek(input_file.tell() - 1)
+                error("Expected '=' after ':'",line_number,char_number)
+        
         # Relation Operators
         elif char == '>':
             char = input_file.read(1)
@@ -256,13 +258,40 @@ def lex():
             return Token(TokenType.LESS_TK, tokenString, line_number, char_number)
         elif char == '=':
             return Token(TokenType.EQUAL_TK, tokenString, line_number, char_number)
-
+        
+        # Comments
+        elif char == '#':
+            while char:
+                char = input_file.read(1)
+                tokenString += char
+                char_number += 1
+                if char == '\n':
+                    line_number += 0
+                    char_number = 0
+                    char_number += 1
+                if char == '#':
+                    break
+                elif char == '':
+                    error("EOF. Comments never closed",line_number,char_number)
+            char = input_file.read(1)
+        
+        elif char == '':
+            return Token(TokenType.EOF_TK, 'EOF', line_number, 0)
+        elif char == '.':
+            return Token(TokenType.PERIOD_TK, '.', line_number, char_number)
+        else:
+            error("Illegal Character",line_number,char_number)
 
 # -------------------------------- #
-# |        Error Printing        | #
+# |             Error            | #
 # -------------------------------- #
-def error():
-    pass
+def error(error_message,line_number,char_number):
+    global input_file
+    print(input_file.name,"::","Line:",line_number+1,"::","Char:",char_number,"::","ERROR:",error_message)
+    input_file.seek(0)
+    input_file.close()
+    exit(1)
+
 
 
 # -------------------------------- #
@@ -275,9 +304,11 @@ def main(input_Cimple_file):
     global input_file
     input_file = open(input_Cimple_file, 'r')
 
-    lex()
-    lex()
-    lex()
+
+    token = lex()
+    while token.tk_type is not TokenType.PERIOD_TK:
+        print(token.tk_string, "|Type: ", token.tk_type)
+        token = lex()
 
 
 main(sys.argv[1])
