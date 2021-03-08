@@ -317,6 +317,8 @@ def program():
             programblock()
         else:
             error('Program name \'%s\' is not valid.' % token.tk_string, line_number, char_number)
+        if token.tk_type is not TokenType.PERIOD_TK:
+            error('Expected \'.\' after \'}\'', line_number, char_number)
     else:
         error('Expected \'program\' keyword instead of \'%s\' .' % token.tk_string, line_number, char_number)
 
@@ -332,15 +334,15 @@ def declarations():
     while token.tk_type == TokenType.DECLARE_TK:
         token = lex()
         print(token.tk_string)
-        vardecl()
+        varlist()
         if token.tk_type != TokenType.SEMI_COLON_TK:
             error('Expected \';\' after declaration of variables.', line_number, char_number)
         token = lex()
         print(token.tk_string)
 
 
-def vardecl():
-    global token
+def varlist():
+    global token, has_return
     if token.tk_type is TokenType.ID_TK:
         token = lex()
         print(token.tk_string)
@@ -355,6 +357,7 @@ def vardecl():
 
 def subprograms():
     global token
+    print("Subprograms ", token.tk_string)
     while token.tk_type is TokenType.PROCEDURE_TK or token.tk_type is TokenType.FUNCTION_TK:
         if token.tk_type is TokenType.PROCEDURE_TK:
             token = lex()
@@ -368,13 +371,14 @@ def subprograms():
 
 def subprogram():
     global token
+    print("Subprograms ", token.tk_string)
     if token.tk_type is TokenType.ID_TK:
         token = lex()
         print(token.tk_string)
         if token.tk_type is TokenType.OPEN_PARENTHESIS_TK:
             token = lex()
             print(token.tk_string)
-            formalparlist()
+            formalparitem()
             token = lex()
             print(token.tk_string)
         else:
@@ -387,20 +391,28 @@ def subprogram():
             error('Expected \')\' instead found: %s' % token.tk_string, line_number, char_number)
     else:
         error('Expected ID instead of: %s' % token.tk_string, line_number, char_number)
+    token = lex()
 
 
 def formalparlist():
     global token
-    pass
+    while token.tk_type is TokenType.COMMA_TK:
+        token = lex()
+        print("list", token.tk_string)
+        if token.tk_type is not TokenType.IN_TK or token.tk_type is not TokenType.INOUT_TK:
+            error('Expected formal parameter declaration', line_number, char_number)
+        formalparitem()
 
 
-def formalparlitem():
+def formalparitem():
     global token
     if token.tk_type is TokenType.IN_TK:
         token = lex()
         print(token.tk_string)
         if token.tk_type is not TokenType.ID_TK:
             error('Expected ID instead of: %s' % token.tk_string, line_number, char_number)
+        token = lex()
+        print(token.tk_string)
     else:
         error('Expected \'in.', line_number, char_number)
 
@@ -409,6 +421,8 @@ def formalparlitem():
         print(token.tk_string)
         if token.tk_type is not TokenType.ID_TK:
             error('Expected ID instead of: %s' % token.tk_string, line_number, char_number)
+        token = lex()
+        print(token.tk_string)
     else:
         error('Expected \'inout.', line_number, char_number)
 
