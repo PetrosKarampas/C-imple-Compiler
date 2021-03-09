@@ -1,6 +1,7 @@
 import sys
 
-# Petros Karampas, AM:2987, Username: cse52987
+
+# Petros Karampas, AM: 2987, Username: cse52987
 # Nikos Amvazas, AM: 2932, Username: cse52932
 
 class Token:
@@ -313,7 +314,7 @@ def program():
 
         if token.tk_type is TokenType.ID_TK:
             program_name = token.tk_string
-            #print(program_name)
+            # print(program_name)
             token = lex()
             # print(token.tk_string)
             block()
@@ -492,6 +493,7 @@ def whileStat():
         error('Expected \'(\' instead of %s' % token.tk_string, line_number, char_number)
     token = lex()
 
+
 def returnStat():
     global token
     if token.tk_type is TokenType.OPEN_PARENTHESIS_TK:
@@ -514,7 +516,7 @@ def inputStat():
             token = lex()
             if token.tk_type is TokenType.CLOSE_PARENTHESIS_TK:
                 token = lex()
-                print(token.tk_string)
+                # print(token.tk_string)
             else:
                 error('Expected \')\' instead of %s' % token.tk_string, line_number, char_number)
         else:
@@ -710,7 +712,7 @@ def factor():
     # print(token.tk_string)
     elif token.tk_type is TokenType.ID_TK:
         token = lex()
-        #print(token.tk_string)
+        # print(token.tk_string)
         idtail()
     else:
         error('Expected factor', line_number, char_number)

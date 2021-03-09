@@ -1,0 +1,34 @@
+program test
+	# declarations #
+	declare x;
+	declare i,fact;
+	# main #
+	{
+		input(x);
+		fact := 1;
+		i := 1;
+		if (i<=x or fact<>19)
+		{
+			#COMMENTS#
+			while (i<=x and i<=3)
+			{
+				fact := fact*i;  #COMMENTS#
+				i := i+1;  #COMMENTS#
+			};
+			fact := x*i;
+			i := fact+1;
+		};
+		print(fact);
+		input(x);
+		print(x);
+		while (i<=x and i<=3)
+		{
+			if (x>=15 and fact<=2){
+				  #COMMENTS#
+				i := x - fact;
+			};
+			i:= x/4;
+			fact := i;  #COMMENTS#
+			x := x-1;	#COMMENTS#
+		};
+	}.
