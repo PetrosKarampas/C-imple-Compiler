@@ -1,5 +1,7 @@
 import sys
 
+# Petros Karampas, AM:2987, Username: cse52987
+# Nikos Amvazas, AM: 2932, Username: cse52932
 
 class Token:
     def __init__(self, tk_type=None, tk_string=None, tk_line_number=None, tk_char_number=None):
@@ -306,161 +308,469 @@ def error(error_message, line_number, char_number):
 def program():
     global token, line_number, char_number
     if token.tk_type is TokenType.PROGRAM_TK:
-        print(token.tk_string)  # Check
+        # print(token.tk_string)  # Check
         token = lex()
 
         if token.tk_type is TokenType.ID_TK:
             program_name = token.tk_string
             print(program_name)
             token = lex()
-            print(token.tk_string)
-            programblock()
+            # print(token.tk_string)
+            block()
+            token = lex()
+            # print(token.tk_string)
         else:
             error('Program name \'%s\' is not valid.' % token.tk_string, line_number, char_number)
-        if token.tk_type is not TokenType.PERIOD_TK:
-            error('Expected \'.\' after \'}\'', line_number, char_number)
     else:
         error('Expected \'program\' keyword instead of \'%s\' .' % token.tk_string, line_number, char_number)
+    if token.tk_type is not TokenType.PERIOD_TK:
+        # print(token.tk_string)
+        error('Expected \'.\' after \'}\'', line_number, char_number)
 
 
-def programblock():
+def block():
     declarations()
     subprograms()
-    block()
+    statements()
 
 
 def declarations():
     global token
-    while token.tk_type == TokenType.DECLARE_TK:
+    while token.tk_type is TokenType.DECLARE_TK:
         token = lex()
-        print(token.tk_string)
+        # print(token.tk_string)
         varlist()
-        if token.tk_type != TokenType.SEMI_COLON_TK:
+        if token.tk_type is not TokenType.SEMI_COLON_TK:
             error('Expected \';\' after declaration of variables.', line_number, char_number)
-        token = lex()
-        print(token.tk_string)
+        token = lex()  # Last read before subprograms() if program has declarations
+        # print(token.tk_string)
 
 
 def varlist():
-    global token, has_return
+    global token
     if token.tk_type is TokenType.ID_TK:
         token = lex()
-        print(token.tk_string)
+        # print(token.tk_string)
         while token.tk_type is TokenType.COMMA_TK:
             token = lex()
-            print(token.tk_string)
+            # print(token.tk_string)
             if token.tk_type is not TokenType.ID_TK:
-                error("Expected Comma", line_number, char_number)
-        token = lex()
-        print(token.tk_string)
+                error("Expected variable declaration instead of '%s'." % token.tk_string, line_number, char_number)
+            token = lex()
+            # print(token.tk_string)
 
 
 def subprograms():
     global token
-    print("Subprograms ", token.tk_string)
     while token.tk_type is TokenType.PROCEDURE_TK or token.tk_type is TokenType.FUNCTION_TK:
         if token.tk_type is TokenType.PROCEDURE_TK:
             token = lex()
-            print(token.tk_string)
             subprogram()
         elif token.tk_type is TokenType.FUNCTION_TK:
             token = lex()
-            print(token.tk_string)
+            # print(token.tk_string)
             subprogram()
 
 
 def subprogram():
     global token
-    print("Subprograms ", token.tk_string)
     if token.tk_type is TokenType.ID_TK:
         token = lex()
-        print(token.tk_string)
+        # print(token.tk_string)
         if token.tk_type is TokenType.OPEN_PARENTHESIS_TK:
-            token = lex()
-            print(token.tk_string)
-            formalparitem()
-            token = lex()
-            print(token.tk_string)
+            formalparlist()
         else:
             error('Expected \'(\' instead found: %s' % token.tk_string, line_number, char_number)
         if token.tk_type is TokenType.CLOSE_PARENTHESIS_TK:
             token = lex()
-            print(token.tk_string)
-            programblock()
+            if token.tk_type is TokenType.OPEN_CURLY_BRACKET_TK:
+                # print(token.tk_string)
+                block()
+                # print(token.tk_string)
+                if token.tk_type is not TokenType.CLOSE_CURLY_BRACKET_TK:
+                    error('Expected \'}\' instead found: %s' % token.tk_string, line_number, char_number)
+            else:
+                error('Expected \'{\' instead found: %s' % token.tk_string, line_number, char_number)
         else:
             error('Expected \')\' instead found: %s' % token.tk_string, line_number, char_number)
     else:
         error('Expected ID instead of: %s' % token.tk_string, line_number, char_number)
-    token = lex()
 
 
 def formalparlist():
     global token
-    while token.tk_type is TokenType.COMMA_TK:
+    token = lex()
+    # print(token.tk_string)
+    if token.tk_type is TokenType.IN_TK or token.tk_type is TokenType.INOUT_TK:
         token = lex()
-        print("list", token.tk_string)
-        if token.tk_type is not TokenType.IN_TK or token.tk_type is not TokenType.INOUT_TK:
-            error('Expected formal parameter declaration', line_number, char_number)
+        # print(token.tk_string)
         formalparitem()
+        while token.tk_type is TokenType.COMMA_TK:
+            token = lex()
+            # print(token.tk_string)
+            if token.tk_type is TokenType.IN_TK or token.tk_type is TokenType.INOUT_TK:
+                token = lex()
+                # print(token.tk_string)
+                formalparitem()
+            else:
+                error('Expected formal parameter declaration', line_number, char_number)
 
 
 def formalparitem():
     global token
+    if token.tk_type is TokenType.ID_TK:
+        token = lex()
+        # print(token.tk_string)
+    else:
+        error('Expected ID instead of: %s' % token.tk_string, line_number, char_number)
+
+
+def statements():
+    global token
+    if token.tk_type is TokenType.OPEN_CURLY_BRACKET_TK:
+        token = lex()
+        # print(token.tk_string)
+        statement()
+        # print(token.tk_string)
+        while token.tk_type is TokenType.SEMI_COLON_TK:
+            token = lex()
+            # print(token.tk_string)
+            statement()
+        if token.tk_type is not TokenType.CLOSE_CURLY_BRACKET_TK:
+            error('Expected statements end (\'}\') but found \'%s\' instead.' % token.tk_string, line_number,
+                  char_number)
+    else:
+        statement()
+
+
+def statement():
+    global token
+    if token.tk_type is TokenType.ID_TK:
+        token = lex()
+        # print(token.tk_string)
+        assignStat()
+    elif token.tk_type is TokenType.IF_TK:
+        token = lex()
+        # print(token.tk_string)
+        ifStat()
+    elif token.tk_type is TokenType.WHILE_TK:
+        token = lex()
+        # print(token.tk_string)
+        whileStat()
+    elif token.tk_type is TokenType.SWITCHCASE_TK:
+        pass
+    elif token.tk_type is TokenType.FORCASE_TK:
+        pass
+    elif token.tk_type is TokenType.INCASE_TK:
+        pass
+    elif token.tk_type is TokenType.CALL_TK:
+        token = lex()
+        callStat()
+    elif token.tk_type is TokenType.RETURN_TK:
+        token = lex()
+        returnStat()
+    elif token.tk_type is TokenType.INPUT_TK:
+        token = lex()
+        # print(token.tk_string)
+        inputStat()
+    elif token.tk_type is TokenType.PRINT_TK:
+        token = lex()
+        # print(token.tk_string)
+        printStat()
+
+
+def whileStat():
+    global token
+    if token.tk_type is TokenType.OPEN_PARENTHESIS_TK:
+        token = lex()
+        condition()
+        if token.tk_type is not TokenType.CLOSE_PARENTHESIS_TK:
+            error('Expected \')\' instead of %s' % token.tk_string, line_number, char_number)
+        token = lex()
+        statements()
+    else:
+        error('Expected \'(\' instead of %s' % token.tk_string, line_number, char_number)
+    token = lex()
+
+def returnStat():
+    global token
+    if token.tk_type is TokenType.OPEN_PARENTHESIS_TK:
+        token = lex()
+        # print(token.tk_string)
+        expression()
+        if token.tk_type is TokenType.CLOSE_PARENTHESIS_TK:
+            token = lex()
+        else:
+            error('Expected \')\' instead of %s' % token.tk_string, line_number, char_number)
+    else:
+        error('Expected \'(\' instead of %s' % token.tk_string, line_number, char_number)
+
+
+def inputStat():
+    global token
+    if token.tk_type is TokenType.OPEN_PARENTHESIS_TK:
+        token = lex()
+        if token.tk_type is TokenType.ID_TK:
+            token = lex()
+            if token.tk_type is TokenType.CLOSE_PARENTHESIS_TK:
+                token = lex()
+            else:
+                error('Expected \')\' instead of %s' % token.tk_string, line_number, char_number)
+        else:
+            error('Expected \'ID\' instead of %s' % token.tk_string, line_number, char_number)
+    else:
+        error('Expected \'(\' instead of %s' % token.tk_string, line_number, char_number)
+
+
+def printStat():
+    global token
+    if token.tk_type is TokenType.OPEN_PARENTHESIS_TK:
+        token = lex()
+        # print(token.tk_string)
+        expression()
+        if token.tk_type is TokenType.CLOSE_PARENTHESIS_TK:
+            token = lex()
+        else:
+            error('Expected \')\' instead of %s' % token.tk_string, line_number, char_number)
+
+
+def callStat():
+    global token
+    if token.tk_type is TokenType.ID_TK:
+        token = lex()
+        if token.tk_type is TokenType.OPEN_PARENTHESIS_TK:
+            actualparlist()
+            # print(token.tk_string)
+            if token.tk_type is not TokenType.CLOSE_PARENTHESIS_TK:
+                error('Expected \')\' instead of %s' % token.tk_string, line_number, char_number)
+        else:
+            error('Expected \'(\' instead of %s' % token.tk_string, line_number, char_number)
+    else:
+        error('Expected \'ID\' instead of %s' % token.tk_string, line_number, char_number)
+
+
+def ifStat():
+    global token
+    if token.tk_type is TokenType.OPEN_PARENTHESIS_TK:
+        token = lex()
+        # print(token.tk_string)
+        condition()
+        if token.tk_type is TokenType.CLOSE_PARENTHESIS_TK:
+            token = lex()
+            statements()
+            elsepart()
+        else:
+            error('Expected \')\' instead found: %s' % token.tk_string, line_number, char_number)
+    else:
+        error('Expected \'(\' instead found: %s' % token.tk_string, line_number, char_number)
+    token = lex()
+
+
+def elsepart():
+    global token
+    if token.tk_type is TokenType.ELSE_TK:
+        token = lex()
+        statements()
+
+
+def condition():
+    global token
+    boolterm()
+    while token.tk_type is TokenType.OR_TK:
+        token = lex()
+        boolterm()
+
+
+def boolterm():
+    global token
+    boolfactor()
+    while token.tk_type is TokenType.AND_TK:
+        token = lex()
+        boolfactor()
+
+
+def boolfactor():
+    global token
+    if token.tk_type is TokenType.NOT_TK:
+        token = lex()
+        # print(token.tk_string)
+        if token.tk_type is TokenType.OPEN_SQUARE_BRACKET_TK:
+            token = lex()
+            # print(token.tk_string)
+            condition()
+            if token.tk_type is TokenType.CLOSE_SQUARE_BRACKET_TK:
+                token = lex()
+                # print(token.tk_string)
+            else:
+                error('Expected \']\' instead of %s' % token.tk_string, line_number, char_number)
+        else:
+            error('Expected \'[\' instead of %s' % token.tk_string, line_number, char_number)
+    elif token.tk_type is TokenType.OPEN_SQUARE_BRACKET_TK:
+        token = lex()
+        # print(token.tk_string)
+        condition()
+        if token.tk_type is TokenType.CLOSE_SQUARE_BRACKET_TK:
+            token = lex()
+            # print(token.tk_string)
+        else:
+            error('Expected \']\' instead of %s' % token.tk_string, line_number, char_number)
+    else:
+        expression()
+        rel_oper()
+        expression()
+
+
+def rel_oper():
+    global token
+    if token.tk_type is TokenType.EQUAL_TK:
+        token = lex()
+        # print(token.tk_string)
+    elif token.tk_type is TokenType.LESS_OR_EQUAL_TK:
+        token = lex()
+        # print(token.tk_string)
+    elif token.tk_type is TokenType.GREATER_OR_EQUAL_TK:
+        token = lex()
+        # print(token.tk_string)
+    elif token.tk_type is TokenType.GREATER_TK:
+        token = lex()
+        # print(token.tk_string)
+    elif token.tk_type is TokenType.LESS_TK:
+        token = lex()
+        # print(token.tk_string)
+    elif token.tk_type is TokenType.NOT_EQUAL:
+        token = lex()
+    else:
+        error('Expected relational operator', line_number, char_number)
+
+
+def assignStat():
+    global token
+    if token.tk_type is TokenType.ASSIGN_TK:
+        token = lex()
+        # print(token.tk_string)
+        expression()
+    else:
+        error('Expected \':=\' instead of : %s' % token.tk_string, line_number, char_number)
+
+
+def expression():
+    global token
+    optionalSign()
+    term()
+    while token.tk_type is TokenType.PLUS_TK or token.tk_type is TokenType.MINUS_TK:
+        add_Operator()
+        term()
+        token = lex()
+        # print(token.tk_string)
+
+
+def optionalSign():
+    global token
+    if token.tk_type is TokenType.PLUS_TK or token.tk_type is TokenType.MINUS_TK:
+        token = lex()
+        # print(token.tk_string)
+
+
+def add_Operator():
+    global token
+    if token.tk_type is not TokenType.PLUS_TK and token.tk_type is not TokenType.MINUS_TK:
+        error('Expected \'+\' or \'-\' instead of %s' % token.tk_string, line_number, char_number)
+    token = lex()
+    # print(token.tk_string)
+
+
+def mul_Operator():
+    global token
+    if token.tk_type is not TokenType.DIV_TK and token.tk_type is not TokenType.TIMES_TK:
+        error('Expected \'/\' or \'*\' instead of %s' % token.tk_string, line_number, char_number)
+    token = lex()
+    # print(token.tk_string)
+
+
+def term():
+    global token
+    factor()
+    while token.tk_type is TokenType.DIV_TK or token.tk_type is TokenType.TIMES_TK:
+        token = lex()
+        # print(token.tk_string)
+        factor()
+
+
+def factor():
+    global token
+    if token.tk_type is TokenType.NUM_TK:
+        token = lex()
+    elif token.tk_type is TokenType.OPEN_PARENTHESIS_TK:
+        token = lex()
+        expression()
+        if token.tk_type is not TokenType.CLOSE_PARENTHESIS_TK:
+            error('Expected \')\' instead of: %s' % token.tk_string, line_number, char_number)
+        token = lex()
+    # print(token.tk_string)
+    elif token.tk_type is TokenType.ID_TK:
+        token = lex()
+        #print(token.tk_string)
+        idtail()
+    else:
+        error('Expected factor', line_number, char_number)
+
+
+def idtail():
+    global token
+    # print(token.tk_string)
+    if token.tk_type is TokenType.OPEN_PARENTHESIS_TK:
+        actualparlist()
+        if token.tk_type is not TokenType.CLOSE_PARENTHESIS_TK:
+            error('Expected \')\' instead of: %s' % token.tk_string, line_number, char_number)
+
+
+def actualparlist():
+    global token
+    token = lex()
+    # print(token.tk_string)
+    if token.tk_type is TokenType.IN_TK or token.tk_type is TokenType.INOUT_TK:
+        actualparitem()
+        while token.tk_type is TokenType.COMMA_TK:
+            token = lex()
+            # print(token.tk_string)
+            if token.tk_type is TokenType.IN_TK or token.tk_type is TokenType.INOUT_TK:
+                token = lex()
+                # print(token.tk_string)
+                actualparitem()
+            else:
+                error('Expected formal parameter declaration', line_number, char_number)
+
+
+def actualparitem():
+    global token
     if token.tk_type is TokenType.IN_TK:
         token = lex()
-        print(token.tk_string)
-        if token.tk_type is not TokenType.ID_TK:
-            error('Expected ID instead of: %s' % token.tk_string, line_number, char_number)
+        # print(token.tk_string)
+        expression()
+    elif token.tk_type is TokenType.INOUT_TK:
         token = lex()
-        print(token.tk_string)
-    else:
-        error('Expected \'in.', line_number, char_number)
-
-    if token.tk_type is TokenType.INOUT_TK:
-        token = lex()
-        print(token.tk_string)
-        if token.tk_type is not TokenType.ID_TK:
-            error('Expected ID instead of: %s' % token.tk_string, line_number, char_number)
-        token = lex()
-        print(token.tk_string)
-    else:
-        error('Expected \'inout.', line_number, char_number)
-
-
-def block():
-    global token
-    if token.tk_type == TokenType.OPEN_CURLY_BRACKET_TK:
-        token = lex()
-        print(token.tk_string)
-        sequence()
-        if token.tk_type == TokenType.CLOSE_CURLY_BRACKET_TK:
+        # print(token.tk_string)
+        if token.tk_type is TokenType.ID_TK:
             token = lex()
-            print(token.tk_string)
+            # print(token.tk_string)
         else:
-            error("Block was not closed. '}' was expected", line_number, char_number)
+            error('Expected \'ID\' instead of %s' % token.tk_string, line_number, char_number)
     else:
-        error("Block was not opened. '{' was expected.", line_number, char_number)
-
-
-def sequence():
-    pass
+        error('Expected parameter type', line_number, char_number)
 
 
 # -------------------------------- #
 # |             Main             | #
 # -------------------------------- #
 
-def main(input_Cimple_file):
+def main(inputfile):
     global input_file
     global token
 
-    input_file = open(input_Cimple_file, 'r')
+    input_file = open(inputfile, 'r')
     # Initiate Syntax Analysis
     token = lex()
     program()
-    while token.tk_type is not TokenType.PERIOD_TK:
-        # print(token.tk_string, "|Type: ", token.tk_type)
-        token = lex()
 
 
 main(sys.argv[1])
