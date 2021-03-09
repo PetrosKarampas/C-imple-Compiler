@@ -313,7 +313,7 @@ def program():
 
         if token.tk_type is TokenType.ID_TK:
             program_name = token.tk_string
-            print(program_name)
+            #print(program_name)
             token = lex()
             # print(token.tk_string)
             block()
@@ -514,6 +514,7 @@ def inputStat():
             token = lex()
             if token.tk_type is TokenType.CLOSE_PARENTHESIS_TK:
                 token = lex()
+                print(token.tk_string)
             else:
                 error('Expected \')\' instead of %s' % token.tk_string, line_number, char_number)
         else:

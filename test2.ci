@@ -1,0 +1,22 @@
+program test2
+
+	# declarations #
+	declare x, i;
+	declare count,fact;
+	# main #
+	{
+		input(x);
+		input (z);
+		while (i<=x)
+		{
+			fact := fact*i;
+			i := i+1;
+		};
+		print(fact);
+		print (z);
+		input (w);
+		print(sub)
+	}.
+		
+		
+		 

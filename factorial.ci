@@ -1,13 +1,13 @@
-program test
+program factorial
 	# declarations #
 	declare x;
 	declare i,fact;
 	# main #
 	{
-		input(x);
+		input(x)
 		fact := 1;
 		i := 1;
-		if (i<=x)
+		while (i<=x)
 		{
 			fact := fact*i;
 			i := i+1;
