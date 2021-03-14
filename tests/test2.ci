@@ -3,8 +3,11 @@ program test2
 	# declarations #
 	declare x, i;
 	declare count,fact;
-	# main #
+	
+	procedure popa(in x, inout b)
 	{
+	
+		print(x);
 		input(x);
 		input (z);
 		while (i<=x)
@@ -15,7 +18,26 @@ program test2
 		print(fact);
 		print (z);
 		input (w);
-		print(sub)
+		print(sub);
+		x:=b;
+		return (z);
+	
+	}
+	# main #
+	{
+		input(x);
+		input (z);
+		while (i<=x)
+		{
+			fact := fact*i;
+			i := i+1;
+		};
+		print(fact);
+		popa(in x,inout x+3);
+		print (z);
+		input (w);
+		print(sub);
+		x := penis 
 	}.
 		
 		

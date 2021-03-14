@@ -6,15 +6,21 @@ program test1
 
     # Main #
     {
-        input(x);
-        input(y);
-
-        if (x>0)
-        {
-            while (a<b and a>c)
-            {
-                a := x + c;
-            };
-        };
-        print(y)
+       forcase
+	case(x<10)
+	{
+		fact:=50;
+		kostas:= fact - x;
+	}
+	case(y=12)
+	{
+		fact:=50;
+		kostas:= x - y;
+	}
+	default
+	{
+		fact:=0;
+	};
+	kostas:= fact;
+	x :=3
     }.

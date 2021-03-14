@@ -1,29 +1,16 @@
-program test2
-
-    # declarations #
-    declare x;
-    declare counter1, y, z;
-
-    # Main #
-    {
-        input(x);
-        input(y);
-        input(z);
-        counter1 := 0;
-
-        while(x>0)
-        {
-            if ( counter<100 and x>20 )
-            {
-                x := y*4;
-                z := x*8;
-                print(x);
-            };
-        };
-        if(z < x or z > y)
-        {
-        	print(z);
-        	print(x)
-        };
-        print(counter1);
-    }.
+program test
+	# declarations #
+	declare x;
+	declare i,fact;
+	# main #
+	{
+		if(x<10)
+		{
+			fact:=50;
+			kostas:= fact;
+		}
+		else
+		{
+			kostas:= fact;
+		}
+	}.

@@ -17,18 +17,20 @@ program test
 			};
 			fact := x*i;
 			i := fact+1;
-		};
-		print(fact);
-		input(x);
-		print(x);
-		while (i<=x and i<=3)
-		{
-			if (x>=15 and fact<=2){
-				  #COMMENTS#
-				i := x - fact;
+		}
+		else{
+			print(fact);
+			input(x);
+			print(x);
+			while (i<=x and i<=3)
+			{
+				if (x>=15 and fact<=2){
+					  #COMMENTS#
+					i := x - fact;
+				};
+				i:= x/4;
+				fact := i;  #COMMENTS#
+				x := x-1;	#COMMENTS#
 			};
-			i:= x/4;
-			fact := i;  #COMMENTS#
-			x := x-1;	#COMMENTS#
 		};
 	}.
