@@ -4,9 +4,8 @@ program test2
 	declare x, i;
 	declare count,fact;
 	
-	procedure popa(in x, inout b)
+	procedure popa(in x)
 	{
-	
 		print(x);
 		input(x);
 		input (z);
@@ -20,24 +19,20 @@ program test2
 		input (w);
 		print(sub);
 		x:=b;
-		return (z);
-	
 	}
 	# main #
 	{
-		input(x);
-		input (z);
 		while (i<=x)
 		{
 			fact := fact*i;
 			i := i+1;
 		};
 		print(fact);
-		popa(in x,inout x+3);
+		popa(in x);
 		print (z);
 		input (w);
 		print(sub);
-		x := penis 
+		x := penis;
 	}.
 		
 		
