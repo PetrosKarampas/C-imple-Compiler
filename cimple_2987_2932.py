@@ -142,6 +142,7 @@ has_return = False
 procedureNames = []
 
 
+
 #                                #
 # --------Lexical Analyzer-------#
 #                                #
@@ -306,7 +307,6 @@ def program():
         print("program()", token.tk_string)
         if token.tk_type is TokenType.ID_TK:
             program_name = token.tk_string
-            # print(program_name)
             token = lex()
             print("program()", token.tk_string)
             block()
@@ -477,9 +477,7 @@ def statement():
         print('here', token.tk_type)
     elif token.tk_type is TokenType.PRINT_TK:
         token = lex()
-        print("statement()", token.tk_string)
         printStat()
-    print('ti eisai',token.tk_string)
 
 
 def switchcaseStat():
@@ -558,17 +556,14 @@ def whileStat():
     global token
     if token.tk_type is TokenType.OPEN_PARENTHESIS_TK:
         token = lex()
-        print("whileStat()", token.tk_string)
         condition()
         if token.tk_type is not TokenType.CLOSE_PARENTHESIS_TK:
             error('Expected \')\' instead of %s' % token.tk_string, line_number, char_number)
         token = lex()
-        print("whileStat()", token.tk_string)
         statements()
     else:
         error('Expected \'(\' instead of %s' % token.tk_string, line_number, char_number)
     token = lex()
-    print("whileStat()", token.tk_string)
 
 
 def returnStat():
@@ -750,7 +745,6 @@ def expression():
     while token.tk_type is TokenType.PLUS_TK or token.tk_type is TokenType.MINUS_TK:
         add_Operator()
         term()
-        ##token = lex()#####??????? Prepei na svhseti dhmioyrgei lathos {x := 45 *(34+10);}
 
 
 def optionalSign():
@@ -799,9 +793,14 @@ def factor():
         token = lex()
         print("factor()", token.tk_string)
     elif token.tk_type is TokenType.ID_TK:
-        token = lex()
-        print("factor()", token.tk_string)
-        idtail()
+        if token.tk_string in procedureNames:
+            token = lex()
+            callStat()
+            token = lex()
+        else:
+            token = lex()
+            print("factor()", token.tk_string)
+            idtail()
     else:
         error('Expected factor', line_number, char_number)
 

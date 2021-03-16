@@ -1,39 +1,12 @@
-program test2
-
-	# declarations #
-	declare x, i;
-	declare count,fact;
-	
-	procedure popa(in x)
+program fibonacci
+	declare x;
+	function fibonacci (in x)
 	{
-		print(x);
-		input(x);
-		input (z);
-		while (i<=x)
-		{
-			fact := fact*i;
-			i := i+1;
-		};
-		print(fact);
-		print (z);
-		input (w);
-		print(sub);
-		x:=b;
+		return ( fibonacci (in x-1) + fibonacci (in x-2));
 	}
 	# main #
 	{
-		while (i<=x)
-		{
-			fact := fact*i;
-			i := i+1;
-		};
-		print(fact);
-		popa(in x);
-		print (z);
-		input (w);
-		print(sub);
-		x := penis;
-	}.
-		
-		
+		input(x);
+		print( fibonacci (in x + y));
+	}.jij
 		 
