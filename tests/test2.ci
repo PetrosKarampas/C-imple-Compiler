@@ -8,5 +8,5 @@ program fibonacci
 	{
 		input(x);
 		print( fibonacci (in x + y));
-	}.jij
+	}.
 		 

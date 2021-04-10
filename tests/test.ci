@@ -13,7 +13,7 @@ program test
 			while (i<=x and i<=3)
 			{
 				fact := fact*i;  #COMMENTS#
-				i := i+1;  #COMMENTS#
+				i := i + x + 1;  #COMMENTS#
 			};
 			fact := x*i;
 			i := fact+1;
@@ -26,7 +26,7 @@ program test
 			{
 				if (x>=15 and fact<=2){
 					  #COMMENTS#
-					i := x - fact;
+					i := x * fact / f;
 				};
 				i:= x/4;
 				fact := i;  #COMMENTS#

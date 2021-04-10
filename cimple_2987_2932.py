@@ -1,7 +1,8 @@
 import sys
 
+
 # Petros Karampas, AM:2987, Username: cse52987
-# Nikos Amvazas, AM: 2932, Username: cse52932
+# Nikos Amvazas, AM:2932, Username: cse52932
 
 
 #                                 #
@@ -9,10 +10,10 @@ import sys
 #                                 #
 class Token:
     def __init__(self, tk_type=None, tk_string=None, tk_line_number=None, tk_char_number=None):
-        self.tk_type = tk_type                  # TokenType Object
-        self.tk_string = tk_string              # String Value
-        self.tk_line_number = tk_line_number    # Token start line number
-        self.tk_char_number = tk_char_number    # Token start character number
+        self.tk_type = tk_type  # TokenType Object
+        self.tk_string = tk_string  # String Value
+        self.tk_line_number = tk_line_number  # Token start line number
+        self.tk_char_number = tk_char_number  # Token start character number
 
     def set_token_type(self, tk_type):
         self.tk_type = tk_type
@@ -25,6 +26,7 @@ class Token:
 
     def set_token_char_number(self, tk_char_number):
         self.tk_char_number = tk_char_number
+
 
 #                                 #
 # -----------TokenType------------# --> Holds every token supported by the C-imple Language
@@ -88,6 +90,7 @@ class TokenType:
     # End of File
     EOF_TK = 45
 
+
 class Quad:
     def __init__(self, tag, op, arg1, arg2, res):
         self.tag = tag
@@ -95,6 +98,10 @@ class Quad:
         self.arg1 = arg1
         self.arg2 = arg2
         self.res = res
+
+    def write_Quad_line(self):
+        return str(self.tag) + ': ' + str(self.op) + ' ' + str(self.arg1) + ' ' + str(self.arg2) + ' ' + str(
+            self.res) + '\n'
 
 
 tokens = {'+': TokenType.PLUS_TK,
@@ -145,27 +152,40 @@ tokens = {'+': TokenType.PLUS_TK,
 # -          Global Variables           -#
 # ---------------------------------------#
 input_file = None
+intermediate_code_file = None
+
 char_number = 0
 line_number = 1
 token = Token(None, None, None, None)
+
 procedureNames = []
 
 quads_list = list()
 quad_tag = 0
-tmp_variable_number = 1 # Temporary variable Number.
-tmp_variables_list = list() # A list with temporary variables. | T_1, T_2, T_3 … .
-
+tmp_variable_number = 1  # Temporary variable Number.
+tmp_variables_list = list()  # A list with temporary variables. | T_1, T_2, T_3 … .
 
 
 # -------------------------------- #
 # |         Error Function       | #
 # -------------------------------- #
 def error(error_message, line_number, char_number):
-    global input_file
+    global input_file, intermediate_code_file
     print(input_file.name, "::", "Line:", line_number, "::", "Char:", char_number, "::", "ERROR:", error_message)
     input_file.seek(0)
     input_file.close()
+    intermediate_code_file.close()
     exit(1)
+
+
+# --------------------------------- #
+# |  Intermediate Code Generator  | #
+# --------------------------------- #
+def intermediate_code_file_generator():
+    for quad in quads_list:
+        intermediate_code_file.write(quad.write_Quad_line())
+    intermediate_code_file.write("END!!!")
+
 
 # --------------------------------- #
 # |  Intermediate Code Functions  | #
@@ -173,29 +193,35 @@ def error(error_message, line_number, char_number):
 def nextquad():
     return quad_tag
 
-def genquad(op=None, arg1='_', arg2='_', res='_'):      #genquad(op, x, y, z)
+
+def genquad(op=None, arg1='_', arg2='_', res='_'):  # genquad(op, x, y, z)
     global quad_tag
-    new_quad  = Quad(quad_tag, op, arg1, arg2, res)
+    new_quad = Quad(quad_tag, op, arg1, arg2, res)
     quad_tag += 1
     quads_list.append(new_quad)
-    
+
+
 def newtemp():
-    global tmp_variable_number , tmp_variables_list
+    global tmp_variable_number, tmp_variables_list
     new_tmp_variable = 'T_' + str(tmp_variable_number)
     tmp_variables_list.append(new_tmp_variable)
     tmp_variable_number += 1
     return new_tmp_variable
 
+
 def emptylist():
     return list()
+
 
 def makelist(tag):
     new_list = list()
     new_list.append(tag)
     return new_list
 
+
 def merge(list_1, list_2):
     return list_1 + list_2
+
 
 def backpatch(tag_list, res):
     global quads_list
@@ -203,6 +229,7 @@ def backpatch(tag_list, res):
     for i in range(quads_list_length):
         if quads_list[i].tag in tag_list:
             quads_list[i].res = res
+
 
 # ---------------------------------- #
 # |        Lexical Analyzer        | #
@@ -345,20 +372,20 @@ def lex():
         else:
             error("Illegal Character", line_number, char_number)
 
+
 # -------------------------------- #
 # |        Syntax Analyzer       | #
 # -------------------------------- #
 def program():
-    global token, line_number, char_number
+    global token, line_number, char_number, main_program_name
     if token.tk_type is TokenType.PROGRAM_TK:
-
         token = lex()
         print("program()", token.tk_string)
         if token.tk_type is TokenType.ID_TK:
-            program_name = token.tk_string
+            main_program_name = token.tk_string
             token = lex()
             print("program()", token.tk_string)
-            block()
+            block(main_program_name)
             token = lex()
         else:
             error('Program name \'%s\' is not valid.' % token.tk_string, line_number, char_number)
@@ -368,10 +395,17 @@ def program():
         # print(token.tk_string)
         error('Expected \'.\' after \'}\' but found %s' % token.tk_string, line_number, char_number)
 
-def block():
+
+def block(block_name):
+    global main_program_name
     declarations()
     subprograms()
+    genquad("begin_block", block_name, "_", "_")
     statements()
+    if block_name == main_program_name:
+        genquad("halt", "_", "_", "_")
+    genquad("end_block", block_name, "_", "_")
+
 
 def declarations():
     global token
@@ -383,6 +417,7 @@ def declarations():
             error('Expected \';\' after declaration of variables.', line_number, char_number)
         token = lex()  # Last read before subprograms() if program has declarations
         print("declarations()", token.tk_string)
+
 
 def subprograms():
     global token
@@ -400,9 +435,13 @@ def subprograms():
             subprogram()
             token = lex()
 
+
 def subprogram():
-    global token
+    global token, main_program_name
     if token.tk_type is TokenType.ID_TK:
+        subprogram_name = token.tk_string
+        if subprogram_name == main_program_name:
+            error("Subprogram name '%s' is already used for main program" % subprogram_name, line_number, char_number)
         token = lex()
         print("subprogram()", token.tk_string)
         if token.tk_type is TokenType.OPEN_PARENTHESIS_TK:
@@ -412,12 +451,13 @@ def subprogram():
         if token.tk_type is TokenType.CLOSE_PARENTHESIS_TK:
             token = lex()
             print("subprogram()", token.tk_string)
-            block()
-            print('After subprogram block',token.tk_string)
+            block(subprogram_name)
+            print('After subprogram block', token.tk_string)
         else:
             error('Expected \')\' instead found: %s' % token.tk_string, line_number, char_number)
     else:
         error('Expected ID instead of: %s' % token.tk_string, line_number, char_number)
+
 
 def varlist():
     global token
@@ -431,6 +471,7 @@ def varlist():
                 error("Expected variable declaration instead of '%s'." % token.tk_string, line_number, char_number)
             token = lex()
             print("varlist()", token.tk_string)
+
 
 def formalparlist():
     global token
@@ -450,6 +491,7 @@ def formalparlist():
             else:
                 error('Expected formal parameter declaration', line_number, char_number)
 
+
 def formalparitem():
     global token
     if token.tk_type is TokenType.ID_TK:
@@ -458,9 +500,10 @@ def formalparitem():
     else:
         error('Expected ID instead of: %s' % token.tk_string, line_number, char_number)
 
+
 def statements():
     global token
-    print('ti eisai edw',token.tk_string)
+    print('ti eisai edw', token.tk_string)
     if token.tk_type is TokenType.OPEN_CURLY_BRACKET_TK:
         token = lex()
         print("statements()", token.tk_string)
@@ -476,6 +519,7 @@ def statements():
     else:
         statement()
 
+
 def statement():
     global token
     if token.tk_type is TokenType.ID_TK:
@@ -484,9 +528,10 @@ def statement():
             callStat()
             token = lex()
         else:
+            var_id = token.tk_string
             token = lex()
             print("statement()", token.tk_string)
-            assignStat()
+            genquad(":=",assignStat() , "_", var_id)
     elif token.tk_type is TokenType.IF_TK:
         token = lex()
         print("statement()", token.tk_string)
@@ -517,6 +562,7 @@ def statement():
         token = lex()
         printStat()
 
+
 def switchcaseStat():
     global token
     if token.tk_type is not TokenType.CASE_TK and token.tk_type is not TokenType.DEFAULT_TK:
@@ -540,6 +586,7 @@ def switchcaseStat():
         token = lex()
     else:
         error('Expected \'default\' instead of %s' % token.tk_string, line_number, char_number)
+
 
 def forcaseStat():
     global token
@@ -565,6 +612,7 @@ def forcaseStat():
     else:
         error('Expected \'default\' instead of %s' % token.tk_string, line_number, char_number)
 
+
 def incaseStat():
     global token
     if token.tk_type is not TokenType.CASE_TK:
@@ -586,6 +634,7 @@ def incaseStat():
     statements()
     token = lex()
 
+
 def whileStat():
     global token
     if token.tk_type is TokenType.OPEN_PARENTHESIS_TK:
@@ -598,6 +647,7 @@ def whileStat():
     else:
         error('Expected \'(\' instead of %s' % token.tk_string, line_number, char_number)
     token = lex()
+
 
 def returnStat():
     global token
@@ -612,6 +662,7 @@ def returnStat():
     else:
         error('Expected \'(\' instead of %s' % token.tk_string, line_number, char_number)
     token = lex()
+
 
 def inputStat():
     global token
@@ -631,6 +682,7 @@ def inputStat():
     else:
         error('Expected \'(\' instead of %s' % token.tk_string, line_number, char_number)
 
+
 def printStat():
     global token
     if token.tk_type is TokenType.OPEN_PARENTHESIS_TK:
@@ -643,6 +695,7 @@ def printStat():
         else:
             error('Expected \')\' instead of %s' % token.tk_string, line_number, char_number)
 
+
 def callStat():
     global token
     if token.tk_type is TokenType.OPEN_PARENTHESIS_TK:
@@ -654,6 +707,7 @@ def callStat():
             error('Expected \')\' instead of %s' % token.tk_string, line_number, char_number)
     else:
         error('Expected \'(\' instead of %s' % token.tk_string, line_number, char_number)
+
 
 def ifStat():
     global token
@@ -672,6 +726,7 @@ def ifStat():
         error('Expected \'(\' instead found: %s' % token.tk_string, line_number, char_number)
     print("ifStat()", token.tk_string)
 
+
 def elsepart():
     global token
     token = lex()
@@ -682,6 +737,7 @@ def elsepart():
         statements()
         token = lex()
 
+
 def condition():
     global token
     boolterm()
@@ -690,6 +746,7 @@ def condition():
         print("condition()", token.tk_string)
         boolterm()
 
+
 def boolterm():
     global token
     boolfactor()
@@ -697,6 +754,7 @@ def boolterm():
         token = lex()
         print("boolterm()", token.tk_string)
         boolfactor()
+
 
 def boolfactor():
     global token
@@ -728,6 +786,7 @@ def boolfactor():
         rel_oper()
         expression()
 
+
 def rel_oper():
     global token
     if token.tk_type is TokenType.EQUAL_TK:
@@ -751,6 +810,7 @@ def rel_oper():
     else:
         error('Expected relational operator', line_number, char_number)
 
+
 def assignStat():
     global token
     if token.tk_type is TokenType.ASSIGN_TK:
@@ -760,32 +820,49 @@ def assignStat():
     else:
         error('Expected \':=\' instead of : %s' % token.tk_string, line_number, char_number)
 
+
 def expression():
     global token
+    counter = 0
     optionalSign()  ##+-
     term()
     while token.tk_type is TokenType.PLUS_TK or token.tk_type is TokenType.MINUS_TK:
-        add_Operator()
-        term()
+        counter += 1
+        if counter > 1:
+            w = newtemp()
+
+
+        add_op = add_Operator()
+        t2 = term()
+        genquad(add_op, t1, t2, w)
+        t1 = w
+
 
 def optionalSign():
     global token
     if token.tk_type is TokenType.PLUS_TK or token.tk_type is TokenType.MINUS_TK:
         add_Operator()
 
+
 def add_Operator():
     global token
     if token.tk_type is not TokenType.PLUS_TK and token.tk_type is not TokenType.MINUS_TK:
         error('Expected \'+\' or \'-\' instead of %s' % token.tk_string, line_number, char_number)
-    token = lex()
+    add_op = token.tk_string
     print("add_Operator()", token.tk_string)
+    token = lex()
+    return add_op
+
 
 def mul_Operator():
     global token
     if token.tk_type is not TokenType.DIV_TK and token.tk_type is not TokenType.TIMES_TK:
         error('Expected \'/\' or \'*\' instead of %s' % token.tk_string, line_number, char_number)
+    mul_op = token.tk_string
+    print("mul_Operator()", token.tk_string)
     token = lex()
-    print("nul_Operator()", token.tk_string)
+    return mul_op
+
 
 def term():
     global token
@@ -794,6 +871,7 @@ def term():
         token = lex()
         print("term()", token.tk_string)
         factor()
+
 
 def factor():
     global token
@@ -821,6 +899,7 @@ def factor():
     else:
         error('Expected factor', line_number, char_number)
 
+
 def idtail():
     global token
     if token.tk_type is TokenType.OPEN_PARENTHESIS_TK:
@@ -828,12 +907,13 @@ def idtail():
         if token.tk_type is not TokenType.CLOSE_PARENTHESIS_TK:
             error('Expected \')\' instead of: %s' % token.tk_string, line_number, char_number)
 
+
 def actualparlist():
     global token
     print("actualparlist() kifsa", token.tk_string)
     if token.tk_type is TokenType.IN_TK or token.tk_type is TokenType.INOUT_TK:
         actualparitem()
-        print('comma?',token.tk_string)
+        print('comma?', token.tk_string)
         while token.tk_type is TokenType.COMMA_TK:
             token = lex()
             print("actualparlist()", token.tk_string)
@@ -842,6 +922,7 @@ def actualparlist():
                 actualparitem()
             else:
                 error('Expected formal parameter declaration', line_number, char_number)
+
 
 def actualparitem():
     global token
@@ -866,14 +947,22 @@ def actualparitem():
 # -------------------------------- #
 
 def main(inputfile):
-    global input_file
+    global input_file, intermediate_code_file
     global token
 
     input_file = open(inputfile, 'r')
+    intermediate_code_file = open(inputfile[:-3] + '.int', 'w')
+
     # Initiate Syntax Analysis
     token = lex()
     print("THIS IS THE FIRST ONE", token.tk_string)
     program()
+
+    intermediate_code_file_generator()
+
+    # Close Files
+    input_file.close()
+    intermediate_code_file.close()
 
 
 main(sys.argv[1])
