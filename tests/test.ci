@@ -13,7 +13,7 @@ program test
 			while (i<=x and i<=3)
 			{
 				fact := fact*i;  #COMMENTS#
-				i := i + x + 1;  #COMMENTS#
+				i := i + (x + 1);  #COMMENTS#
 			};
 			fact := x*i;
 			i := fact+1;

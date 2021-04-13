@@ -93,11 +93,11 @@ class TokenType:
 
 class Quad:
     def __init__(self, tag, op, arg1, arg2, res):
-        self.tag = tag
-        self.op = op
-        self.arg1 = arg1
-        self.arg2 = arg2
-        self.res = res
+        self.tag = tag      # Label
+        self.op = op        # Operators: +,-,*,/
+        self.arg1 = arg1    # Variable/Constant
+        self.arg2 = arg2    # Variable/Constant
+        self.res = res      # Variable (Destination)
 
     def write_Quad_line(self):
         return str(self.tag) + ': ' + str(self.op) + ' ' + str(self.arg1) + ' ' + str(self.arg2) + ' ' + str(
@@ -531,7 +531,7 @@ def statement():
             var_id = token.tk_string
             token = lex()
             print("statement()", token.tk_string)
-            genquad(":=",assignStat() , "_", var_id)
+            genquad(":=", assignStat(), "_", var_id)
     elif token.tk_type is TokenType.IF_TK:
         token = lex()
         print("statement()", token.tk_string)
@@ -740,7 +740,6 @@ def elsepart():
 
 def condition():
     global token
-    boolterm()
     while token.tk_type is TokenType.OR_TK:
         token = lex()
         print("condition()", token.tk_string)
@@ -816,73 +815,85 @@ def assignStat():
     if token.tk_type is TokenType.ASSIGN_TK:
         token = lex()
         print("assignStat()", token.tk_string)
-        expression()
+        expression_value = expression()
     else:
         error('Expected \':=\' instead of : %s' % token.tk_string, line_number, char_number)
+    return expression_value
 
 
 def expression():
     global token
-    counter = 0
-    optionalSign()  ##+-
-    term()
+    print("expression()", token.tk_string)
+    operator = optionalSign()  ##+-
+    arg_1 = term()
+    if operator == "-":
+        temp_var = newtemp()
+        genquad(operator, arg_1, '_', temp_var)
+        arg_1 = temp_var
+    elif operator == "+":
+        temp_var = newtemp()
+        genquad(operator, arg_1, '_', temp_var)
+        arg_1 = temp_var
     while token.tk_type is TokenType.PLUS_TK or token.tk_type is TokenType.MINUS_TK:
-        counter += 1
-        if counter > 1:
-            w = newtemp()
-
-
-        add_op = add_Operator()
-        t2 = term()
-        genquad(add_op, t1, t2, w)
-        t1 = w
+        operator = add_Operator()
+        arg_2 = term()
+        temp_var = newtemp()
+        genquad(operator, arg_1, arg_2, temp_var)
+        arg_1 = temp_var
+    return arg_1
 
 
 def optionalSign():
     global token
     if token.tk_type is TokenType.PLUS_TK or token.tk_type is TokenType.MINUS_TK:
-        add_Operator()
+        return add_Operator()
 
 
 def add_Operator():
     global token
     if token.tk_type is not TokenType.PLUS_TK and token.tk_type is not TokenType.MINUS_TK:
         error('Expected \'+\' or \'-\' instead of %s' % token.tk_string, line_number, char_number)
-    add_op = token.tk_string
+    add_operator = token.tk_string
     print("add_Operator()", token.tk_string)
     token = lex()
-    return add_op
+    return add_operator
 
 
 def mul_Operator():
     global token
     if token.tk_type is not TokenType.DIV_TK and token.tk_type is not TokenType.TIMES_TK:
         error('Expected \'/\' or \'*\' instead of %s' % token.tk_string, line_number, char_number)
-    mul_op = token.tk_string
+    mul_operator = token.tk_string
     print("mul_Operator()", token.tk_string)
     token = lex()
-    return mul_op
+    return mul_operator
 
 
 def term():
     global token
-    factor()
+    arg_1 = factor()
     while token.tk_type is TokenType.DIV_TK or token.tk_type is TokenType.TIMES_TK:
-        token = lex()
+        operator = mul_Operator()
         print("term()", token.tk_string)
-        factor()
+        arg_2 = factor()
+        temp_var = newtemp()
+        genquad(operator, arg_1, arg_2, temp_var)
+        arg_1 = temp_var
+    return arg_1
 
 
 def factor():
-    global token
+    global token, tmp_variables_list
+    factor_value = None
     if token.tk_type is TokenType.NUM_TK:
+        factor_value = token.tk_string
         token = lex()
         print("factor()", token.tk_string)
     elif token.tk_type is TokenType.OPEN_PARENTHESIS_TK:
+        print("factor()", token.tk_string)
         token = lex()
         print("factor()", token.tk_string)
-
-        expression()
+        factor_value = expression()
         if token.tk_type is not TokenType.CLOSE_PARENTHESIS_TK:
             error('Expected \')\' instead of: %s' % token.tk_string, line_number, char_number)
         token = lex()
@@ -893,11 +904,13 @@ def factor():
             callStat()
             token = lex()
         else:
+            factor_value = token.tk_string
             token = lex()
             print("factor()", token.tk_string)
             idtail()
     else:
         error('Expected factor', line_number, char_number)
+    return factor_value
 
 
 def idtail():
@@ -959,7 +972,6 @@ def main(inputfile):
     program()
 
     intermediate_code_file_generator()
-
     # Close Files
     input_file.close()
     intermediate_code_file.close()
