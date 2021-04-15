@@ -1,0 +1,17 @@
+program test5
+
+declare x,y;
+
+{
+	if (b>1 or f<2 or g+1<f+b)
+	{
+	
+		x := 3;
+	
+	
+	};
+
+
+
+
+}.

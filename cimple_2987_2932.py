@@ -93,11 +93,11 @@ class TokenType:
 
 class Quad:
     def __init__(self, tag, op, arg1, arg2, res):
-        self.tag = tag      # Label
-        self.op = op        # Operators: +,-,*,/
-        self.arg1 = arg1    # Variable/Constant
-        self.arg2 = arg2    # Variable/Constant
-        self.res = res      # Variable (Destination)
+        self.tag = tag  # Label
+        self.op = op  # Operators: +,-,*,/
+        self.arg1 = arg1  # Variable/Constant
+        self.arg2 = arg2  # Variable/Constant
+        self.res = res  # Variable (Destination)
 
     def write_Quad_line(self):
         return str(self.tag) + ': ' + str(self.op) + ' ' + str(self.arg1) + ' ' + str(self.arg2) + ' ' + str(
@@ -674,7 +674,7 @@ def inputStat():
             print("inputStat()", token.tk_string)
             if token.tk_type is TokenType.CLOSE_PARENTHESIS_TK:
                 token = lex()
-                print("inputStat()ooga", token.tk_string)
+                print("inputStat()", token.tk_string)
             else:
                 error('Expected \')\' instead of %s' % token.tk_string, line_number, char_number)
         else:
@@ -714,7 +714,8 @@ def ifStat():
     if token.tk_type is TokenType.OPEN_PARENTHESIS_TK:
         token = lex()
         print("ifStat()", token.tk_string)
-        condition()
+        b_true, b_false = condition()
+        backpatch(b_true, nextquad())
         if token.tk_type is TokenType.CLOSE_PARENTHESIS_TK:
             token = lex()
             print("ifStat()", token.tk_string)
@@ -740,19 +741,28 @@ def elsepart():
 
 def condition():
     global token
+    b_true, b_false = boolterm()
     while token.tk_type is TokenType.OR_TK:
         token = lex()
         print("condition()", token.tk_string)
-        boolterm()
+        backpatch(b_false, nextquad())
+        q2_true, q2_false = boolterm()
+        b_true = merge(b_true, q2_true)
+        b_false = q2_false
+    return b_true, b_false
 
 
 def boolterm():
     global token
-    boolfactor()
+    b_true, b_false = boolfactor()
     while token.tk_type is TokenType.AND_TK:
         token = lex()
         print("boolterm()", token.tk_string)
-        boolfactor()
+        backpatch(b_true, nextquad())
+        q2_true, q2_false = boolterm()
+        b_false = merge(b_false, q2_false)
+        b_true = q2_true
+    return b_true, b_false
 
 
 def boolfactor():
@@ -763,7 +773,7 @@ def boolfactor():
         if token.tk_type is TokenType.OPEN_SQUARE_BRACKET_TK:
             token = lex()
             print("boolfactor()", token.tk_string)
-            condition()
+            b_false, b_true = condition()
             if token.tk_type is TokenType.CLOSE_SQUARE_BRACKET_TK:
                 token = lex()
                 print("boolfactor()", token.tk_string)
@@ -774,20 +784,26 @@ def boolfactor():
     elif token.tk_type is TokenType.OPEN_SQUARE_BRACKET_TK:
         token = lex()
         print("boolfactor()", token.tk_string)
-        condition()
+        b_true, b_false = condition()
         if token.tk_type is TokenType.CLOSE_SQUARE_BRACKET_TK:
             token = lex()
             print("boolfactor()", token.tk_string)
         else:
             error('Expected \']\' instead of %s' % token.tk_string, line_number, char_number)
     else:
-        expression()
-        rel_oper()
-        expression()
+        var1 = expression()
+        rel = rel_oper()
+        var2 = expression()
+        b_true = makelist(nextquad())
+        genquad(rel, var1, var2, '_')
+        b_false = makelist(nextquad())
+        genquad('jump', '_', '_', '_')
+    return b_true, b_false
 
 
 def rel_oper():
     global token
+    ret = token.tk_string
     if token.tk_type is TokenType.EQUAL_TK:
         token = lex()
         print("rel_oper()", token.tk_string)
@@ -808,6 +824,7 @@ def rel_oper():
         print("rel_oper()", token.tk_string)
     else:
         error('Expected relational operator', line_number, char_number)
+    return ret
 
 
 def assignStat():
@@ -815,10 +832,9 @@ def assignStat():
     if token.tk_type is TokenType.ASSIGN_TK:
         token = lex()
         print("assignStat()", token.tk_string)
-        expression_value = expression()
+        return expression()
     else:
         error('Expected \':=\' instead of : %s' % token.tk_string, line_number, char_number)
-    return expression_value
 
 
 def expression():
