@@ -524,9 +524,11 @@ def statement():
     global token
     if token.tk_type is TokenType.ID_TK:
         if token.tk_string in procedureNames:
+            proc_name = token.tk_string
             token = lex()
             callStat()
             token = lex()
+            genquad('call', proc_name, '_', '_')
         else:
             var_id = token.tk_string
             token = lex()
@@ -654,7 +656,7 @@ def returnStat():
     if token.tk_type is TokenType.OPEN_PARENTHESIS_TK:
         token = lex()
         print("returnStat()", token.tk_string)
-        expression()
+        ret = expression()
         if token.tk_type is TokenType.CLOSE_PARENTHESIS_TK:
             print("returnStat()", token.tk_string)
         else:
@@ -662,6 +664,7 @@ def returnStat():
     else:
         error('Expected \'(\' instead of %s' % token.tk_string, line_number, char_number)
     token = lex()
+    genquad(ret, nextquad(), '_', '_')
 
 
 def inputStat():
@@ -715,12 +718,16 @@ def ifStat():
         token = lex()
         print("ifStat()", token.tk_string)
         b_true, b_false = condition()
-        backpatch(b_true, nextquad())
         if token.tk_type is TokenType.CLOSE_PARENTHESIS_TK:
             token = lex()
             print("ifStat()", token.tk_string)
+            backpatch(b_true, nextquad())
             statements()
+            if_list = makelist(nextquad())
+            genquad('jump', '_', '_', '_')
+            backpatch(b_false, nextquad())
             elsepart()
+            backpatch(if_list, nextquad())
         else:
             error('Expected \')\' instead found: %s' % token.tk_string, line_number, char_number)
     else:
@@ -958,11 +965,13 @@ def actualparitem():
     if token.tk_type is TokenType.IN_TK:
         token = lex()
         print("actualparitem()", token.tk_string)
-        expression()
+        par = expression()
+        genquad('par', par, 'CV', '_')
     elif token.tk_type is TokenType.INOUT_TK:
         token = lex()
         print("actualparitem()", token.tk_string)
         if token.tk_type is TokenType.ID_TK:
+            genquad('par', token.tk_string, 'REF', '_')
             token = lex()
             print("actualparitem()", token.tk_string)
         else:

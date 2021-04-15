@@ -7,30 +7,13 @@ program test
 		input(x);
 		fact := 1;
 		i := 1;
-		if (i<=x or fact<>19)
+		if (i<=x and not[fact<>19 or x<2])
 		{
-			#COMMENTS#
-			while (i<=x and i<=3)
-			{
-				fact := fact*i;  #COMMENTS#
-				i := i + (x + 1);  #COMMENTS#
-			};
-			fact := x*i;
 			i := fact+1;
 		}
-		else{
-			print(fact);
-			input(x);
-			print(x);
-			while (i<=x and i<=3)
-			{
-				if (x>=15 and fact<=2){
-					  #COMMENTS#
-					i := x * fact / f;
-				};
-				i:= x/4;
-				fact := i;  #COMMENTS#
-				x := x-1;	#COMMENTS#
+		else	{
+			
+			x := x-1;	
 			};
-		};
+		
 	}.
