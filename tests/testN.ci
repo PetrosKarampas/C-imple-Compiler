@@ -5,10 +5,11 @@ program test1
 
     # Main #
     {
-		x:=x+(50+40);
-		kostas:= fact - x;
-		x:=2*kostas/3 +(10*2)/2;
-		y:=x/kostas + 1;
-		#y:=*x/kostas + 1;  ERROR#
-		x := -4
+		while (x+2>y and y < 2)
+		{
+		
+			x := 3+y;
+			y := 69 + x;
+		
+		};
     }.

@@ -569,14 +569,20 @@ def switchcaseStat():
     global token
     if token.tk_type is not TokenType.CASE_TK and token.tk_type is not TokenType.DEFAULT_TK:
         error('Expected \'case or default\' instead of %s' % token.tk_string, line_number, char_number)
+    exitlist = emptylist()
     while token.tk_type is TokenType.CASE_TK:
         token = lex()
         if token.tk_type is TokenType.OPEN_PARENTHESIS_TK:
             token = lex()
-            condition()
+            cond_true, cond_false = condition()
             if token.tk_type is TokenType.CLOSE_PARENTHESIS_TK:
                 token = lex()
+                backpatch(cond_true, nextquad())
                 statements()
+                e = makelist(nextquad())
+                genquad('jump', '_', '_', '_')
+                merge(exitlist, e)
+                backpatch(cond_false, nextquad())
                 token = lex()
             else:
                 error('Expected \')\' instead of %s' % token.tk_string, line_number, char_number)
@@ -585,6 +591,7 @@ def switchcaseStat():
     if token.tk_type is TokenType.DEFAULT_TK:
         token = lex()
         statements()
+        backpatch(exitlist, nextquad())
         token = lex()
     else:
         error('Expected \'default\' instead of %s' % token.tk_string, line_number, char_number)
@@ -594,14 +601,20 @@ def forcaseStat():
     global token
     if token.tk_type is not TokenType.CASE_TK and token.tk_type is not TokenType.DEFAULT_TK:
         error('Expected \'case or default\' instead of %s' % token.tk_string, line_number, char_number)
+    exitlist = emptylist()
     while token.tk_type is TokenType.CASE_TK:
         token = lex()
         if token.tk_type is TokenType.OPEN_PARENTHESIS_TK:
             token = lex()
-            condition()
+            cond_true, cond_false = condition()
             if token.tk_type is TokenType.CLOSE_PARENTHESIS_TK:
                 token = lex()
+                backpatch(cond_true, nextquad())
                 statements()
+                e = makelist(nextquad())
+                genquad('jump', '_', '_', '_')
+                merge(exitlist, e)
+                backpatch(cond_false, nextquad())
                 token = lex()
             else:
                 error('Expected \')\' instead of %s' % token.tk_string, line_number, char_number)
@@ -610,6 +623,7 @@ def forcaseStat():
     if token.tk_type is TokenType.DEFAULT_TK:
         token = lex()
         statements()
+        backpatch(exitlist, nextquad())
         token = lex()
     else:
         error('Expected \'default\' instead of %s' % token.tk_string, line_number, char_number)
@@ -641,11 +655,15 @@ def whileStat():
     global token
     if token.tk_type is TokenType.OPEN_PARENTHESIS_TK:
         token = lex()
-        condition()
+        b_quad = nextquad()
+        b_true, b_false = condition()
         if token.tk_type is not TokenType.CLOSE_PARENTHESIS_TK:
             error('Expected \')\' instead of %s' % token.tk_string, line_number, char_number)
         token = lex()
+        backpatch(b_true, nextquad())
         statements()
+        genquad('jump', '_', '_', b_quad)
+        backpatch(b_false, nextquad())
     else:
         error('Expected \'(\' instead of %s' % token.tk_string, line_number, char_number)
     token = lex()
@@ -664,7 +682,7 @@ def returnStat():
     else:
         error('Expected \'(\' instead of %s' % token.tk_string, line_number, char_number)
     token = lex()
-    genquad(ret, nextquad(), '_', '_')
+    genquad('retv', ret, '_', '_')
 
 
 def inputStat():
@@ -673,6 +691,7 @@ def inputStat():
         token = lex()
         print("inputStat()", token.tk_string)
         if token.tk_type is TokenType.ID_TK:
+            genquad('inp', token.tk_string, '_', '_')
             token = lex()
             print("inputStat()", token.tk_string)
             if token.tk_type is TokenType.CLOSE_PARENTHESIS_TK:
@@ -691,7 +710,8 @@ def printStat():
     if token.tk_type is TokenType.OPEN_PARENTHESIS_TK:
         token = lex()
         print("printStat()", token.tk_string)
-        expression()
+        e = expression()
+        genquad('out', e, '_', '_')
         if token.tk_type is TokenType.CLOSE_PARENTHESIS_TK:
             token = lex()
             print("printStat()", token.tk_string)
