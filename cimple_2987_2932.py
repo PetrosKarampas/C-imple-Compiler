@@ -601,7 +601,7 @@ def forcaseStat():
     global token
     if token.tk_type is not TokenType.CASE_TK and token.tk_type is not TokenType.DEFAULT_TK:
         error('Expected \'case or default\' instead of %s' % token.tk_string, line_number, char_number)
-    exitlist = emptylist()
+    p1_quad = nextquad()
     while token.tk_type is TokenType.CASE_TK:
         token = lex()
         if token.tk_type is TokenType.OPEN_PARENTHESIS_TK:
@@ -611,9 +611,7 @@ def forcaseStat():
                 token = lex()
                 backpatch(cond_true, nextquad())
                 statements()
-                e = makelist(nextquad())
-                genquad('jump', '_', '_', '_')
-                merge(exitlist, e)
+                genquad('jump', '_', '_', p1_quad)
                 backpatch(cond_false, nextquad())
                 token = lex()
             else:
@@ -623,7 +621,6 @@ def forcaseStat():
     if token.tk_type is TokenType.DEFAULT_TK:
         token = lex()
         statements()
-        backpatch(exitlist, nextquad())
         token = lex()
     else:
         error('Expected \'default\' instead of %s' % token.tk_string, line_number, char_number)
@@ -640,15 +637,19 @@ def incaseStat():
             condition()
             if token.tk_type is TokenType.CLOSE_PARENTHESIS_TK:
                 token = lex()
+                backpatch(cond_true, nextquad())
+                genquad(':=', '0', '_', w)
                 statements()
+                backpatch(cond_false, nextquad())
                 token = lex()
             else:
                 error('Expected \')\' instead of %s' % token.tk_string, line_number, char_number)
         else:
             error('Expected \'(\' instead of %s' % token.tk_string, line_number, char_number)
-    token = lex()
-    statements()
-    token = lex()
+    #token = lex()
+    genquad(':=', w, '0', p1_quad)
+    #statements()
+    #token = lex()
 
 
 def whileStat():
@@ -950,7 +951,7 @@ def factor():
             factor_value = token.tk_string
             token = lex()
             print("factor()", token.tk_string)
-            idtail()
+            id_list = idtail()
     else:
         error('Expected factor', line_number, char_number)
     return factor_value
@@ -959,9 +960,10 @@ def factor():
 def idtail():
     global token
     if token.tk_type is TokenType.OPEN_PARENTHESIS_TK:
-        actualparlist()
+        par_list = actualparlist()
         if token.tk_type is not TokenType.CLOSE_PARENTHESIS_TK:
             error('Expected \')\' instead of: %s' % token.tk_string, line_number, char_number)
+        return par_list
 
 
 def actualparlist():
