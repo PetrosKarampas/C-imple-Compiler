@@ -1,0 +1,12 @@
+0: begin_block addpos _ _
+1: inp x _ _
+2: := 0 _ sum
+3: > x 0 5
+4: jump _ _ 8
+5: + sum x T_1
+6: := T_1 _ sum
+7: jump _ _ 3
+8: out sum _ _
+9: halt _ _ _
+10: end_block addpos _ _
+END!!!

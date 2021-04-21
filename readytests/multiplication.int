@@ -1,0 +1,16 @@
+0: begin_block multi _ _
+1: := 1 _ i
+2: <= i 10 4
+3: jump _ _ 8
+4: * num i T_1
+5: := T_1 _ num
+6: out num _ _
+7: jump _ _ 2
+8: out x _ _
+9: end_block multi _ _
+10: begin_block multiplication _ _
+11: inp x _ _
+12: par x REF _
+13: halt _ _ _
+14: end_block multiplication _ _
+END!!!

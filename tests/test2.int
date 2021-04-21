@@ -1,0 +1,11 @@
+0: begin_block fibonacci _ _
+1: - x 1 T_1
+2: - x 2 T_2
+3: + None None T_3
+4: T_3 4 _ _
+5: end_block fibonacci _ _
+6: begin_block kados _ _
+7: + x y T_4
+8: halt _ _ _
+9: end_block kados _ _
+END!!!

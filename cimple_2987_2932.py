@@ -631,11 +631,14 @@ def incaseStat():
     global token
     if token.tk_type is not TokenType.CASE_TK:
         error('Expected \'case or default\' instead of %s' % token.tk_string, line_number, char_number)
+    w = newtemp()
+    p1_quad = nextquad()
+    genquad(':=', 1, '_', w)
     while token.tk_type is TokenType.CASE_TK:
         token = lex()
         if token.tk_type is TokenType.OPEN_PARENTHESIS_TK:
             token = lex()
-            condition()
+            cond_true, cond_false = condition()
             if token.tk_type is TokenType.CLOSE_PARENTHESIS_TK:
                 token = lex()
                 backpatch(cond_true, nextquad())

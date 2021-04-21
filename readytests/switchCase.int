@@ -1,0 +1,25 @@
+0: begin_block checkSwitchCase _ _
+1: inp x _ _
+2: <= y 0 4
+3: jump _ _ 7
+4: * x 2 T_1
+5: := T_1 _ y
+6: jump _ _ 21
+7: > x 0 9
+8: jump _ _ 14
+9: * y 3 T_2
+10: out T_2 _ _
+11: * x 2 T_3
+12: := T_3 _ y
+13: jump _ _ 21
+14: = y 2 16
+15: jump _ _ 19
+16: + x y T_4
+17: out T_4 _ _
+18: jump _ _ 21
+19: * x 2 T_5
+20: retv T_5 _ _
+21: retv x _ _
+22: halt _ _ _
+23: end_block checkSwitchCase _ _
+END!!!

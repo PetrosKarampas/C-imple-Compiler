@@ -1,0 +1,17 @@
+0: begin_block gcd _ _
+1: inp n1 _ _
+2: inp n2 _ _
+3: <> n1 n2 5
+4: jump _ _ 13
+5: > n1 n2 7
+6: jump _ _ 10
+7: - n1 n2 T_1
+8: := T_1 _ n1
+9: jump _ _ 12
+10: - n2 n1 T_2
+11: := T_2 _ n2
+12: jump _ _ 3
+13: out n1 _ _
+14: halt _ _ _
+15: end_block gcd _ _
+END!!!

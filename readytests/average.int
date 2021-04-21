@@ -1,0 +1,17 @@
+0: begin_block average _ _
+1: inp x _ _
+2: := 0 _ sum
+3: := 0 _ count
+4: > x 1 6
+5: jump _ _ 11
+6: + sum x T_1
+7: := T_1 _ sum
+8: + count 1 T_2
+9: := T_2 _ count
+10: jump _ _ 4
+11: / sum count T_3
+12: := T_3 _ average
+13: out average _ _
+14: halt _ _ _
+15: end_block average _ _
+END!!!

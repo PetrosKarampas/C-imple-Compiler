@@ -1,0 +1,19 @@
+0: begin_block test1 _ _
+1: < x 10 3
+2: jump _ _ 7
+3: := 50 _ fact
+4: - fact x T_1
+5: := T_1 _ kostas
+6: jump _ _ _
+7: = y 12 9
+8: jump _ _ 13
+9: := 50 _ fact
+10: - x y T_2
+11: := T_2 _ kostas
+12: jump _ _ _
+13: := 0 _ fact
+14: := fact _ kostas
+15: := 3 _ x
+16: halt _ _ _
+17: end_block test1 _ _
+END!!!
