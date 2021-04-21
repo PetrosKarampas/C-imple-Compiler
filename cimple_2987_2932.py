@@ -151,17 +151,19 @@ tokens = {'+': TokenType.PLUS_TK,
 # ---------------------------------------#
 # -          Global Variables           -#
 # ---------------------------------------#
-input_file = None
-intermediate_code_file = None
+input_file = None  # Input CI file
+intermediate_code_file = None  # Intermediate Code File
 
-char_number = 0
-line_number = 1
-token = Token(None, None, None, None)
+char_number = 0  # Current character number
+line_number = 1  # Current line number
+token = Token(None, None, None, None)  # holds the return value of the lexical analyzer each time it's called
 
-procedureNames = []
+has_subprogram = False  # A flag to see whether or not to create c equivalent file
+has_return = False
+procedureNames = []  # A list that holds all of the procedure id's
 
-quads_list = list()
-quad_tag = 0
+quads_list = list()  # A List with all the created quads
+quad_tag = 0  # Current quad tag
 tmp_variable_number = 1  # Temporary variable Number.
 tmp_variables_list = list()  # A list with temporary variables. | T_1, T_2, T_3 … .
 
@@ -420,17 +422,19 @@ def declarations():
 
 
 def subprograms():
-    global token
+    global token, procedures_exists, has_return
     while token.tk_type is TokenType.PROCEDURE_TK or token.tk_type is TokenType.FUNCTION_TK:
         if token.tk_type is TokenType.PROCEDURE_TK:
+            procedures_exists = True
             token = lex()
             procedureNames.append(token.tk_string)
             print("subprograms()", token.tk_string)
             subprogram()
             token = lex()
         elif token.tk_type is TokenType.FUNCTION_TK:
+            has_return = True
             token = lex()
-            procedureNames.append(token.tk_string)
+            # procedureNames.append(token.tk_string)
             print("subprograms()", token.tk_string)
             subprogram()
             token = lex()
@@ -523,17 +527,14 @@ def statements():
 def statement():
     global token
     if token.tk_type is TokenType.ID_TK:
-        if token.tk_string in procedureNames:
-            proc_name = token.tk_string
-            token = lex()
-            callStat()
-            token = lex()
-            genquad('call', proc_name, '_', '_')
-        else:
-            var_id = token.tk_string
-            token = lex()
-            print("statement()", token.tk_string)
-            genquad(":=", assignStat(), "_", var_id)
+        var_id = token.tk_string
+        token = lex()
+        print("statement()", token.tk_string)
+        genquad(":=", assignStat(), "_", var_id)
+    elif token.tk_type is TokenType.CALL_TK:
+        token = lex()
+        callStat()
+        token = lex()
     elif token.tk_type is TokenType.IF_TK:
         token = lex()
         print("statement()", token.tk_string)
@@ -567,21 +568,21 @@ def statement():
 
 def switchcaseStat():
     global token
+    exit_list = emptylist()
     if token.tk_type is not TokenType.CASE_TK and token.tk_type is not TokenType.DEFAULT_TK:
         error('Expected \'case or default\' instead of %s' % token.tk_string, line_number, char_number)
-    exitlist = emptylist()
     while token.tk_type is TokenType.CASE_TK:
         token = lex()
         if token.tk_type is TokenType.OPEN_PARENTHESIS_TK:
             token = lex()
             cond_true, cond_false = condition()
+            backpatch(cond_true, nextquad())
             if token.tk_type is TokenType.CLOSE_PARENTHESIS_TK:
                 token = lex()
-                backpatch(cond_true, nextquad())
                 statements()
                 e = makelist(nextquad())
                 genquad('jump', '_', '_', '_')
-                merge(exitlist, e)
+                exit_list = merge(exit_list, e)
                 backpatch(cond_false, nextquad())
                 token = lex()
             else:
@@ -591,8 +592,8 @@ def switchcaseStat():
     if token.tk_type is TokenType.DEFAULT_TK:
         token = lex()
         statements()
-        backpatch(exitlist, nextquad())
         token = lex()
+        backpatch(exit_list, nextquad())
     else:
         error('Expected \'default\' instead of %s' % token.tk_string, line_number, char_number)
 
@@ -646,10 +647,10 @@ def incaseStat():
                 error('Expected \')\' instead of %s' % token.tk_string, line_number, char_number)
         else:
             error('Expected \'(\' instead of %s' % token.tk_string, line_number, char_number)
-    #token = lex()
+    # token = lex()
     genquad(':=', w, '0', p1_quad)
-    #statements()
-    #token = lex()
+    # statements()
+    # token = lex()
 
 
 def whileStat():
@@ -722,15 +723,21 @@ def printStat():
 
 def callStat():
     global token
-    if token.tk_type is TokenType.OPEN_PARENTHESIS_TK:
-        print('tinautore', token.tk_string)
+    if token.tk_type is TokenType.ID_TK:
+        # if token.tk_string not in procedureNames:
+        # error('There is no procedure called %s' % token.tk_string, line_number, char_number)
         token = lex()
-        actualparlist()
-        print('tinautorekade', token.tk_string)
-        if token.tk_type is not TokenType.CLOSE_PARENTHESIS_TK:
-            error('Expected \')\' instead of %s' % token.tk_string, line_number, char_number)
+        if token.tk_type is TokenType.OPEN_PARENTHESIS_TK:
+            print('tinautore', token.tk_string)
+            token = lex()
+            actualparlist()
+            print('tinautorekade', token.tk_string)
+            if token.tk_type is not TokenType.CLOSE_PARENTHESIS_TK:
+                error('Expected \')\' instead of %s' % token.tk_string, line_number, char_number)
+        else:
+            error('Expected \'(\' instead of %s' % token.tk_string, line_number, char_number)
     else:
-        error('Expected \'(\' instead of %s' % token.tk_string, line_number, char_number)
+        error('Expected procedure ID instead of %s' % token.tk_string, line_number, char_number)
 
 
 def ifStat():
@@ -851,6 +858,7 @@ def rel_oper():
         token = lex()
         print("rel_oper()", token.tk_string)
     else:
+        print(token.tk_string)
         error('Expected relational operator', line_number, char_number)
     return ret
 
@@ -943,15 +951,18 @@ def factor():
         token = lex()
         print("factor()", token.tk_string)
     elif token.tk_type is TokenType.ID_TK:
-        if token.tk_string in procedureNames:
-            token = lex()
-            callStat()
-            token = lex()
-        else:
-            factor_value = token.tk_string
-            token = lex()
-            print("factor()", token.tk_string)
-            id_list = idtail()
+        factor_value = token.tk_string
+        print("factor()", token.tk_string)
+        token = lex()
+        id_list = idtail()
+        if id_list is not None:
+            if factor_value not in procedureNames:
+                w = newtemp()
+                genquad('par', w, 'RET', '_')
+                genquad('call', factor_value, '_', '_')
+                token = lex()
+            else:
+                error('Cannot call procedure as a factor as it has not return value', line_number, char_number)
     else:
         error('Expected factor', line_number, char_number)
     return factor_value
@@ -959,11 +970,13 @@ def factor():
 
 def idtail():
     global token
+    print('ugabuga ', token.tk_string)
     if token.tk_type is TokenType.OPEN_PARENTHESIS_TK:
-        par_list = actualparlist()
+        token = lex()
+        has_pars = actualparlist()
         if token.tk_type is not TokenType.CLOSE_PARENTHESIS_TK:
             error('Expected \')\' instead of: %s' % token.tk_string, line_number, char_number)
-        return par_list
+        return has_pars
 
 
 def actualparlist():
@@ -980,6 +993,7 @@ def actualparlist():
                 actualparitem()
             else:
                 error('Expected formal parameter declaration', line_number, char_number)
+        return True
 
 
 def actualparitem():
