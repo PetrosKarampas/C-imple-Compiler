@@ -153,11 +153,13 @@ tokens = {'+': TokenType.PLUS_TK,
 # ---------------------------------------#
 input_file = None  # Input CI file
 intermediate_code_file = None  # Intermediate Code File
+c_code_file = None # Contains the quads list in equivalent C code.
 
 char_number = 0  # Current character number
 line_number = 1  # Current line number
 token = Token(None, None, None, None)  # holds the return value of the lexical analyzer each time it's called
 
+main_program_name = ''
 has_subprogram = False  # A flag to see whether or not to create c equivalent file
 has_return = False
 procedureNames = []  # A list that holds all of the procedure id's
@@ -166,6 +168,7 @@ quads_list = list()  # A List with all the created quads
 quad_tag = 0  # Current quad tag
 tmp_variable_number = 1  # Temporary variable Number.
 tmp_variables_list = list()  # A list with temporary variables. | T_1, T_2, T_3 … .
+ci_variables_list = list()  # A list with variables. | a, b, c … .
 
 
 # -------------------------------- #
@@ -186,7 +189,53 @@ def error(error_message, line_number, char_number):
 def intermediate_code_file_generator():
     for quad in quads_list:
         intermediate_code_file.write(quad.write_Quad_line())
-    intermediate_code_file.write("END!!!")
+    
+# --------------------------------- #
+# |       C Code Generator        | #
+# --------------------------------- #
+def c_code_file_generator():
+    c_code_file.write('#include <stdio.h>\n\n')
+    arithmetic_operators = ['+', '-', '*', '/']
+    relational_operators = ['<', '>', '=', '<=', '>=', '<>']
+    for quad in quads_list:
+        if quad.op == 'begin_block':
+            c_variable_line = "" #Init
+            if ci_variables_list:
+                for ci_variable in ci_variables_list:
+                    c_variable_line = c_variable_line + ci_variable + ',' + ' '
+            if tmp_variables_list:
+                for tmp_variable in tmp_variables_list:
+                    c_variable_line = c_variable_line + tmp_variable + ',' + ' '
+            if c_variable_line != "":
+                c_code_file.write('int ' + c_variable_line[:-2] + ';' + '\n\n')
+            c_code_file.write('int main()\n{\n')
+        elif quad.op == 'halt':
+            c_code_file.write('\n')
+        elif quad.op == 'end_block':
+            c_code_file.write('}')
+        elif quad.op in arithmetic_operators:
+            c_code_file.write('\tL_' + str(quad.tag) + ': ' + str(quad.res) + '=' + str(quad.arg1) + ' ' + str(quad.op) + ' ' + str(quad.arg2) + ';' + '  //(' + str(quad.op) +', ' + str(quad.arg1) +', ' + str(quad.arg2) +', ' + str(quad.res) +')\n')
+        elif quad.op == ':=':
+            c_code_file.write('\tL_' + str(quad.tag) + ': ' + str(quad.res) + '=' + str(quad.arg1) + ';' + '  //(' + str(quad.op) +', ' + str(quad.arg1) +', ' + str(quad.arg2) +', ' + str(quad.res) +')\n')
+        elif quad.op in relational_operators:
+            if quad.op == '=':
+                ci_relational_operator = '=='
+            elif quad.op == '<>':
+                ci_relational_operator = '!='
+            else:
+                ci_relational_operator = quad.op
+            c_code_file.write('\tL_' + str(quad.tag) + ': ' + 'if (' + str(quad.arg1) + ci_relational_operator + str(quad.arg2) + ')' + ' goto L_' + str(quad.res) + ';' + '  //(' + str(quad.op) +', ' + str(quad.arg1) +', ' + str(quad.arg2) +', ' + str(quad.res) +')\n')
+        elif quad.op == 'jump':
+            c_code_file.write('\tL_' + str(quad.tag) + ': ' + 'goto L_' + str(quad.res) + ';'  + '  //(' + str(quad.op) +', ' + str(quad.arg1) +', ' + str(quad.arg2) +', ' + str(quad.res) +')\n')
+        elif quad.op == 'inp':
+            c_code_file.write('\tL_' + str(quad.tag) + ': ' + 'scanf(\'%d\'' + ', &' + str(quad.arg1) + ')' + ';' + '  //(' + str(quad.op) +', ' + str(quad.arg1) +', ' + str(quad.arg2) +', ' + str(quad.res) +')\n')
+        elif quad.op == 'out':
+            c_code_file.write('\tL_' + str(quad.tag) + ': ' + 'printf(\'%d\'' + ', ' + str(quad.arg1) + ')' + ';' + '  //(' + str(quad.op) +', ' + str(quad.arg1) +', ' + str(quad.arg2) +', ' + str(quad.res) +')\n')
+        
+            
+     
+
+            
 
 
 # --------------------------------- #
@@ -422,8 +471,9 @@ def declarations():
 
 
 def subprograms():
-    global token, procedures_exists, has_return
+    global token, procedures_exists, has_return , has_subprogram
     while token.tk_type is TokenType.PROCEDURE_TK or token.tk_type is TokenType.FUNCTION_TK:
+        has_subprogram = True
         if token.tk_type is TokenType.PROCEDURE_TK:
             procedures_exists = True
             token = lex()
@@ -464,8 +514,9 @@ def subprogram():
 
 
 def varlist():
-    global token
+    global token, ci_variables_list
     if token.tk_type is TokenType.ID_TK:
+        ci_variables_list.append(token.tk_string)
         token = lex()
         print("varlist()", token.tk_string)
         while token.tk_type is TokenType.COMMA_TK:
@@ -473,6 +524,7 @@ def varlist():
             print("varlist()", token.tk_string)
             if token.tk_type is not TokenType.ID_TK:
                 error("Expected variable declaration instead of '%s'." % token.tk_string, line_number, char_number)
+            ci_variables_list.append(token.tk_string)
             token = lex()
             print("varlist()", token.tk_string)
 
@@ -1024,21 +1076,28 @@ def actualparitem():
 # -------------------------------- #
 
 def main(inputfile):
-    global input_file, intermediate_code_file
-    global token
+    global input_file, intermediate_code_file, c_code_file
+    global token, has_subprogram
 
     input_file = open(inputfile, 'r')
-    intermediate_code_file = open(inputfile[:-3] + '.int', 'w')
+    c_code_file = open(inputfile[:-2] + 'c', 'w')
 
     # Initiate Syntax Analysis
     token = lex()
     print("THIS IS THE FIRST ONE", token.tk_string)
     program()
 
-    intermediate_code_file_generator()
+
+    if not has_subprogram:
+        intermediate_code_file = open(inputfile[:-2] + 'int', 'w')
+        intermediate_code_file_generator()
+        c_code_file_generator()
+
+
     # Close Files
     input_file.close()
     intermediate_code_file.close()
+    c_code_file.close()
 
 
 main(sys.argv[1])

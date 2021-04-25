@@ -1,0 +1,24 @@
+program checkInCase
+declare x,y,z,k;
+#main#
+{
+	input(x);
+	y:=1;
+	z:=2;
+	k:=3;
+	
+	incase
+		case(x<0)
+		{
+			print(y);
+		}
+		case(x>0)
+		{
+			print(z);
+		}
+		case(x=0)
+		{
+			print(k);
+		};
+	print(x);
+}.

@@ -1,16 +1,19 @@
 program test
-	# declarations #
-	declare x;
-	declare i,fact;
-	# main #
+
+	declare a,b,c,d,e;
+	
+	function max(in x, in y)
 	{
-		if(x<10)
+		if (x>y)
 		{
-			fact:=50;
-			kostas:= fact;
+			return (x);
 		}
-		else
-		{
-			kostas:= fact;
-		}
+		else{
+			return (y);
+		};
+	}
+	
+	#main#
+	{
+		e := max(in max(in a, in b), in max(in c, in d));
 	}.
