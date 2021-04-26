@@ -12,8 +12,13 @@ program test
 			return (y);
 		};
 	}
+	function peoc(in x, in y)
+	{
+		return (x);
+	
+	}
 	
 	#main#
 	{
-		e := max(in max(in a, in b), in max(in c, in d));
+		e := max(in peoc(in a, in b), in c);
 	}.
