@@ -1,9 +1,9 @@
 #include <stdio.h>
 
-int main()
-{
 int x, count, mult, T_1, T_2, T_3, T_4, T_5;
 
+int main()
+{
 	L_1: if (k>1000) goto L_3;  //(>, k, 1000, 3)
 	L_2: goto L_6;  //(jump, _, _, 6)
 	L_3: T_1=t * 30;  //(*, t, 30, T_1)
@@ -23,6 +23,6 @@ int x, count, mult, T_1, T_2, T_3, T_4, T_5;
 	L_17: T_5=count + 10;  //(+, count, 10, T_5)
 	L_18: count=T_5;  //(:=, T_5, _, count)
 	L_19: goto L_13;  //(jump, _, _, 13)
-	L_20: printf('%d', mult);  //(out, mult, _, _)
+	L_20: printf("%d", mult);  //(out, mult, _, _)
 
 }

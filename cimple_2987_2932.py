@@ -242,11 +242,15 @@ def c_code_file_generator():
                     quad.arg1) + ', ' + str(quad.arg2) + ', ' + str(quad.res) + ')\n')
         elif quad.op == 'inp':
             c_code_file.write(
-                '\tL_' + str(quad.tag) + ': ' + 'scanf(\'%d\'' + ', &' + str(quad.arg1) + ')' + ';' + '  //(' + str(
+                '\tL_' + str(quad.tag) + ': ' + 'scanf(\"%d\"' + ', &' + str(quad.arg1) + ')' + ';' + '  //(' + str(
                     quad.op) + ', ' + str(quad.arg1) + ', ' + str(quad.arg2) + ', ' + str(quad.res) + ')\n')
         elif quad.op == 'out':
             c_code_file.write(
-                '\tL_' + str(quad.tag) + ': ' + 'printf(\'%d\'' + ', ' + str(quad.arg1) + ')' + ';' + '  //(' + str(
+                '\tL_' + str(quad.tag) + ': ' + 'printf(\"''%d\"' + ', ' + str(quad.arg1) + ')' + ';' + '  //(' + str(
+                    quad.op) + ', ' + str(quad.arg1) + ', ' + str(quad.arg2) + ', ' + str(quad.res) + ')\n')
+        elif quad.op == 'retv':
+            c_code_file.write(
+                '\tL_' + str(quad.tag) + ': ' + 'return ' + str(quad.arg1) + ';' + '  //(' + str(
                     quad.op) + ', ' + str(quad.arg1) + ', ' + str(quad.arg2) + ', ' + str(quad.res) + ')\n')
 
 

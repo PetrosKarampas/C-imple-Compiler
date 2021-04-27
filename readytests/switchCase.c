@@ -23,5 +23,7 @@ int main()
 	L_17: printf('%d', T_4);  //(out, T_4, _, _)
 	L_18: goto L_21;  //(jump, _, _, 21)
 	L_19: T_5=x * 2;  //(*, x, 2, T_5)
+	L_20: return T_5;  //(retv, T_5, _, _)
+	L_21: return x;  //(retv, x, _, _)
 
 }
