@@ -203,7 +203,6 @@ def c_code_file_generator():
     relational_operators = ['<', '>', '=', '<=', '>=', '<>']
     for quad in quads_list:
         if quad.op == 'begin_block':
-            c_code_file.write('int main()\n{\n')
             c_variable_line = ""  # Init
             if ci_variables_list:
                 for ci_variable in ci_variables_list:
@@ -213,6 +212,7 @@ def c_code_file_generator():
                     c_variable_line = c_variable_line + tmp_variable + ',' + ' '
             if c_variable_line != "":
                 c_code_file.write('int ' + c_variable_line[:-2] + ';' + '\n\n')
+            c_code_file.write('int main()\n{\n')
         elif quad.op == 'halt':
             c_code_file.write('\n')
         elif quad.op == 'end_block':

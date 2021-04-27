@@ -1,9 +1,9 @@
 #include <stdio.h>
 
-int main()
-{
 int x, y, T_1, T_2, T_3, T_4, T_5;
 
+int main()
+{
 	L_1: scanf('%d', &x);  //(inp, x, _, _)
 	L_2: if (y<=0) goto L_4;  //(<=, y, 0, 4)
 	L_3: goto L_7;  //(jump, _, _, 7)
