@@ -1023,9 +1023,12 @@ def main(inputfile):
     intermediate_code_file_generator()
 
     if not has_subprogram:
+        print('Subprogram not detected. C equivalent file created')
         c_code_file = open(inputfile[:-2] + 'c', 'w')
         c_code_file_generator()
         c_code_file.close()
+    else:
+        print('Subprogram detected. C equivalent file creation aborted')
 
     # Close Files
     input_file.close()
