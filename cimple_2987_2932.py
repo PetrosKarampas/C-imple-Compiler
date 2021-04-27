@@ -214,7 +214,8 @@ def c_code_file_generator():
                 c_code_file.write('int ' + c_variable_line[:-2] + ';' + '\n\n')
             c_code_file.write('int main()\n{\n')
         elif quad.op == 'halt':
-            c_code_file.write('\n')
+            c_code_file.write('\tL_' + str(quad.tag) + ': {}' +  '  //(' + str(quad.op) + ', ' + str(quad.arg1) + ', ' + str(
+                    quad.arg2) + ', ' + str(quad.res) + ')\n')
         elif quad.op == 'end_block':
             c_code_file.write('}')
         elif quad.op in arithmetic_operators:
@@ -246,7 +247,7 @@ def c_code_file_generator():
                     quad.op) + ', ' + str(quad.arg1) + ', ' + str(quad.arg2) + ', ' + str(quad.res) + ')\n')
         elif quad.op == 'out':
             c_code_file.write(
-                '\tL_' + str(quad.tag) + ': ' + 'printf(\"''%d\"' + ', ' + str(quad.arg1) + ')' + ';' + '  //(' + str(
+                '\tL_' + str(quad.tag) + ': ' + 'printf(\"''%d\\n\"' + ', ' + str(quad.arg1) + ')' + ';' + '  //(' + str(
                     quad.op) + ', ' + str(quad.arg1) + ', ' + str(quad.arg2) + ', ' + str(quad.res) + ')\n')
         elif quad.op == 'retv':
             c_code_file.write(
@@ -693,7 +694,7 @@ def incaseStat():
                 error('Expected \')\' instead of %s' % token.tk_string, line_number, char_number)
         else:
             error('Expected \'(\' instead of %s' % token.tk_string, line_number, char_number)
-    genquad(':=', w, '0', p1_quad)
+    genquad('=', w, '0', p1_quad)
 
 
 def whileStat():

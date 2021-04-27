@@ -1,18 +1,17 @@
 program test2
 
 	# declarations #
-	declare x, i;
+	declare x, i, c, b;
 	declare count,fact;
 	
 	
 	
-	function papa(in x, in b)
+	function f1(in x, in b)
 	{
-	
 		return (x+b);
 	}
 	
-	procedure popa(in x, inout b, in c)
+	procedure p1(in x, inout b, in c)
 	{
 		print(x);
 		input(x);
@@ -36,11 +35,11 @@ program test2
 			i := i+1;
 		};
 		print(fact);
-		popa(in x, inout s, in p);
+		call p1(in f1(in a, in c), inout s, in c);
 		print (z);
 		input (w);
 		print(sub);
-		x := papa(in x, in b);
+		x := f1(in f1(in x, in s), in b);
 	}.
 		
 		

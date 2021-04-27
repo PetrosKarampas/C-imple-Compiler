@@ -1,24 +1,42 @@
-program test
+program BigTest
 
-	declare a,b,c,d,e;
+		declare x,y,z,a,b,c;
+		declare count,mult;
 	
-	function max(in x, in y)
+	
+	# main #
 	{
-		if (x>y)
-		{
-			return (x);
-		}
-		else{
-			return (y);
+		a := 20;
+		x := 10;
+		input(count);
+		if (count < a)
+		{	
+			while (count<a)
+			{
+				
+				print(a);
+				if (count = 10) 
+				{
+					print(count);
+				};
+				count := count + 1;
+			};
 		};
-	}
-	function peoc(in x, in y)
-	{
-		return (x);
-	
-	}
-	
-	#main#
-	{
-		e := max(in max(in a, in b), in max(in c, in d));
+
+		
+
+		print(c);
+
+        incase
+		case(x <> y)
+		{
+			x := y;
+			print(b);
+		}
+		case(c < 100)
+		{
+			input(c);
+			c := c + 10;
+			print(c);
+		};
 	}.

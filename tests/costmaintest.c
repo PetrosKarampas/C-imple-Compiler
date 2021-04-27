@@ -1,0 +1,37 @@
+#include <stdio.h>
+
+int a, b, c, cost, T_1, T_2, T_3;
+
+int main()
+{
+	L_1: scanf("%d", &cost);  //(inp, cost, _, _)
+	L_2: a=100;  //(:=, 100, _, a)
+	L_3: b=50;  //(:=, 50, _, b)
+	L_4: c=0;  //(:=, 0, _, c)
+	L_5: if (cost>a) goto L_7;  //(>, cost, a, 7)
+	L_6: goto L_19;  //(jump, _, _, 19)
+	L_7: T_1=2 * a;  //(*, 2, a, T_1)
+	L_8: if (cost<T_1) goto L_10;  //(<, cost, T_1, 10)
+	L_9: goto L_16;  //(jump, _, _, 16)
+	L_10: if (cost>b) goto L_12;  //(>, cost, b, 12)
+	L_11: goto L_16;  //(jump, _, _, 16)
+	L_12: T_2=cost / 4;  //(/, cost, 4, T_2)
+	L_13: cost=T_2;  //(:=, T_2, _, cost)
+	L_14: c=cost;  //(:=, cost, _, c)
+	L_15: goto L_18;  //(jump, _, _, 18)
+	L_16: cost=100;  //(:=, 100, _, cost)
+	L_17: c=100;  //(:=, 100, _, c)
+	L_18: goto L_5;  //(jump, _, _, 5)
+	L_19: if (c!=100) goto L_21;  //(<>, c, 100, 21)
+	L_20: goto L_24;  //(jump, _, _, 24)
+	L_21: T_3=cost * 2;  //(*, cost, 2, T_3)
+	L_22: cost=T_3;  //(:=, T_3, _, cost)
+	L_23: goto L_29;  //(jump, _, _, 29)
+	L_24: if (c==100) goto L_26;  //(=, c, 100, 26)
+	L_25: goto L_28;  //(jump, _, _, 28)
+	L_26: c=1;  //(:=, 1, _, c)
+	L_27: goto L_29;  //(jump, _, _, 29)
+	L_28: c=0;  //(:=, 0, _, c)
+	L_29: printf("%d\n", cost);  //(out, cost, _, _)
+	L_30: {}  //(halt, _, _, _)
+}
