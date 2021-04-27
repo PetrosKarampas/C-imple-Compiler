@@ -14,8 +14,7 @@
 13: inp x _ _
 14: par x CV _
 15: par T_2 RET _
-16: call absvalue _ _
-17: out absvalue _ _
+16: call _ _ absvalue
+17: out T_2 _ _
 18: halt _ _ _
 19: end_block absolutevalue _ _
-END!!!

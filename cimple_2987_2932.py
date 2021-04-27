@@ -164,6 +164,9 @@ has_subprogram = False  # A flag to see whether or not to create c equivalent fi
 has_return = False
 procedureNames = []  # A list that holds all of the procedure id's
 
+function_names = []
+tmp_counter = 0
+
 quads_list = list()  # A List with all the created quads
 quad_tag = 0  # Current quad tag
 tmp_variable_number = 1  # Temporary variable Number.
@@ -200,6 +203,7 @@ def c_code_file_generator():
     relational_operators = ['<', '>', '=', '<=', '>=', '<>']
     for quad in quads_list:
         if quad.op == 'begin_block':
+            c_code_file.write('int main()\n{\n')
             c_variable_line = ""  # Init
             if ci_variables_list:
                 for ci_variable in ci_variables_list:
@@ -209,7 +213,6 @@ def c_code_file_generator():
                     c_variable_line = c_variable_line + tmp_variable + ',' + ' '
             if c_variable_line != "":
                 c_code_file.write('int ' + c_variable_line[:-2] + ';' + '\n\n')
-            c_code_file.write('int main()\n{\n')
         elif quad.op == 'halt':
             c_code_file.write('\n')
         elif quad.op == 'end_block':
@@ -487,7 +490,7 @@ def subprograms():
         elif token.tk_type is TokenType.FUNCTION_TK:
             has_return = True
             token = lex()
-            # procedureNames.append(token.tk_string)
+            function_names.append(token.tk_string)
             subprogram()
             token = lex()
 
@@ -572,7 +575,9 @@ def statement():
         genquad(":=", assign_value, "_", var_id)
     elif token.tk_type is TokenType.CALL_TK:
         token = lex()
-        callStat()
+        genquad()
+        proc_name = callStat()
+        genquad('call', '_', '_', proc_name)
         token = lex()
     elif token.tk_type is TokenType.IF_TK:
         token = lex()
@@ -684,10 +689,7 @@ def incaseStat():
                 error('Expected \')\' instead of %s' % token.tk_string, line_number, char_number)
         else:
             error('Expected \'(\' instead of %s' % token.tk_string, line_number, char_number)
-    # token = lex()
     genquad(':=', w, '0', p1_quad)
-    # statements()
-    # token = lex()
 
 
 def whileStat():
@@ -754,14 +756,13 @@ def printStat():
 def callStat():
     global token
     if token.tk_type is TokenType.ID_TK:
-        # if token.tk_string not in procedureNames:
-        # error('There is no procedure called %s' % token.tk_string, line_number, char_number)
+        proc_name = token.tk_string
         token = lex()
         if token.tk_type is TokenType.OPEN_PARENTHESIS_TK:
-            token = lex()
             actualparlist()
             if token.tk_type is not TokenType.CLOSE_PARENTHESIS_TK:
                 error('Expected \')\' instead of %s' % token.tk_string, line_number, char_number)
+            return proc_name
         else:
             error('Expected \'(\' instead of %s' % token.tk_string, line_number, char_number)
     else:
@@ -955,14 +956,13 @@ def factor():
         token = lex()
         id_list = idtail()
         if id_list is not None:
-            if factor_value not in procedureNames:
-                w = newtemp()
-                genquad('par', w, 'RET', '_')
-                genquad('call', factor_value, '_', '_')
-                token = lex()
-                factor_value = w
-            else:
+            if factor_value in procedureNames:
                 error('Cannot call procedure as a factor as it has not return value', line_number, char_number)
+            w = newtemp()
+            genquad('par', w, 'RET', '_')
+            genquad('call', '_', '_', factor_value)
+            token = lex()
+            factor_value = w
     else:
         error('Expected factor', line_number, char_number)
     return factor_value
@@ -971,35 +971,28 @@ def factor():
 def idtail():
     global token
     if token.tk_type is TokenType.OPEN_PARENTHESIS_TK:
-        token = lex()
-        has_pars = actualparlist()
-        if token.tk_type is not TokenType.CLOSE_PARENTHESIS_TK:
-            error('Expected \')\' instead of: %s' % token.tk_string, line_number, char_number)
-        return has_pars
+        return actualparlist()
 
 
 def actualparlist():
     global token
-    if token.tk_type is TokenType.IN_TK or token.tk_type is TokenType.INOUT_TK:
-        par = actualparitem()
-        while token.tk_type is TokenType.COMMA_TK:
-            token = lex()
-            if token.tk_type is TokenType.IN_TK or token.tk_type is TokenType.INOUT_TK:
-                par2 = actualparitem()
-                genquad('par', par, 'CV', '_')
-            else:
-                error('Expected formal parameter declaration', line_number, char_number)
-        genquad('par', par2, 'CV', '_')
-        return True
-    else:
-        error('Expected formal parameter declaration', line_number, char_number)
+    if token.tk_type is TokenType.OPEN_PARENTHESIS_TK:
+        token = lex()
+        if token.tk_type is TokenType.IN_TK or token.tk_type is TokenType.INOUT_TK:
+            actualparitem()
+            while token.tk_type is TokenType.COMMA_TK:
+                token = lex()
+                actualparitem()
+        if token.tk_type is TokenType.CLOSE_PARENTHESIS_TK:
+            return True
 
 
 def actualparitem():
-    global token
+    global token, tmp_counter
     if token.tk_type is TokenType.IN_TK:
         token = lex()
         par = expression()
+        genquad('par', par, 'CV', '_')
         return par
     elif token.tk_type is TokenType.INOUT_TK:
         token = lex()

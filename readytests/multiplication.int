@@ -10,7 +10,8 @@
 9: end_block multi _ _
 10: begin_block multiplication _ _
 11: inp x _ _
-12: par x REF _
-13: halt _ _ _
-14: end_block multiplication _ _
-END!!!
+12: None _ _ _
+13: par x REF _
+14: call _ _ multi
+15: halt _ _ _
+16: end_block multiplication _ _

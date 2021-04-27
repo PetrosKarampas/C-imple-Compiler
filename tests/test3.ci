@@ -20,5 +20,5 @@ program test
 	
 	#main#
 	{
-		e := max(in peoc(in a, in b), in c);
+		e := max(in max(in a, in b), in max(in c, in d));
 	}.

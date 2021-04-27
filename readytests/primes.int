@@ -15,7 +15,7 @@
 14: par num CV _
 15: par i CV _
 16: par T_6 RET _
-17: call mod _ _
+17: call _ _ mod
 18: = T_6 0 20
 19: jump _ _ 22
 20: retv 0 _ _
@@ -31,7 +31,7 @@
 30: inp x _ _
 31: par x CV _
 32: par T_8 RET _
-33: call isPrime _ _
+33: call _ _ isPrime
 34: = T_8 1 36
 35: jump _ _ 38
 36: out 1 _ _

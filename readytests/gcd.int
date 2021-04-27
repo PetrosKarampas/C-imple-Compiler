@@ -14,4 +14,3 @@
 13: out n1 _ _
 14: halt _ _ _
 15: end_block gcd _ _
-END!!!
