@@ -14,16 +14,16 @@ program BigTest
 		b := 0;
 		c := 0;
 		input(x);
-		while (count<a)
+		while (count1<a)
 		{
-			if (not[count<10] and not[c>500 or b < 190])
+			if (not[count1<10] and not[c>500 or b < 190])
 			{
-				count := count + 2;
+				count1 := count1 + 2;
 				b := b + 10;
 			}
 			else
 			{
-				count := count + 1;
+				count1 := count1 + 1;
 				c := c + 100;
 			};
 		};

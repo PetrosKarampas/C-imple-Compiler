@@ -1,7 +1,18 @@
-program fibonacci
+program fibonaci
 	declare x;
+	
 	function fibonacci(in x)
-	{
+	
+		declare y;
+		procedure kados(in y)
+		declare x;
+			{
+				y := 3;
+				y := y + y;
+				print(y);
+			}
+		
+	{		
 		return (fibonacci(in x-1)+fibonacci(in x-2));
 	}
 	# m a i n #

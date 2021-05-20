@@ -5,6 +5,19 @@ import sys
 # Nikos Amvazas, AM:2932, Username: cse52932
 
 
+class bcolors:
+    HEADER = '\033[95m'
+    BLUE = '\033[94m'
+    RED = '\033[1;3;;31m'
+    GREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+    BACKGROUND = '\033[1;33m'
+
+
 #                                 #
 # -------------Token--------------# --> Lexical Analyzer returns a Token to the Syntax Analyzer
 #                                 #
@@ -104,6 +117,66 @@ class Quad:
             self.res) + '\n'
 
 
+class Scope:
+    def __init__(self, nestingLevel):
+        self.entities_list = list()
+        self.nestingLevel = nestingLevel
+        self.offset = 12
+
+    def get_next_offset(self):
+        next_offset = self.offset
+        self.offset += 4
+        return next_offset
+
+
+class Variable_Entity:
+    def __init__(self, name, entity_type, offset):
+        self.name = name
+        self.type = entity_type
+        self.offset = offset
+
+
+class Function_Entity:
+    def __init__(self, name, entity_type, startQuad):
+        self.name = name
+        self.type = entity_type
+        self.startQuad = startQuad  # Tag of the first quad of function code.
+        self.arguments_list = list()
+        self.framelength = -1
+
+
+class Constant_Entity:
+    def __init__(self, name, entity_type, value):
+        self.name = name
+        self.type = entity_type
+        self.value = value
+
+
+class Parameter_Entity:
+    def __init__(self, name, entity_type, parMode, offset=-1):
+        self.name = name
+        self.type = entity_type
+        self.parMode = parMode
+        self.offset = offset
+
+
+class Tmp_Variable_Entity:
+    def __init__(self, name, entity_type, offset=-1):
+        self.name = name
+        self.type = entity_type
+        self.offset = offset
+
+
+class Argument:
+    def __init__(self, parMode, argument_type):
+        self.parMode = parMode
+        self.type = argument_type
+        self.next_argument = None
+
+    def set_next_arg(self, next_arg):
+        self.next_argument = next_arg
+
+
 tokens = {'+': TokenType.PLUS_TK,
           '-': TokenType.MINUS_TK,
           '*': TokenType.TIMES_TK,
@@ -149,20 +222,22 @@ tokens = {'+': TokenType.PLUS_TK,
           'print': TokenType.PRINT_TK, }
 
 # ---------------------------------------#
-# -          Global Variables           -#
+# -          Global Variables          - #
 # ---------------------------------------#
-input_file = None  # Input CI file
-intermediate_code_file = None  # Intermediate Code File
+input_file = None  # Input CI file.
+intermediate_code_file = None  # Intermediate Code File.
 c_code_file = None  # Contains the quads list in equivalent C code.
 
-char_number = 0  # Current character number
-line_number = 1  # Current line number
-token = Token(None, None, None, None)  # holds the return value of the lexical analyzer each time it's called
+char_number = 0  # Current character number.
+line_number = 1  # Current line number.
+token = Token(None, None, None, None)  # holds the return value of the lexical analyzer each time it's called.
 
+asm_code_file = ''
 main_program_name = ''
-has_subprogram = False  # A flag to see whether or not to create c equivalent file
+has_subprogram = False  # A flag to see whether or not to create c equivalent file.
 has_return = False
-procedureNames = []  # A list that holds all of the procedure id's
+procedureNames = []  # A list that holds all of the procedure id's.
+actual_pars = list()
 
 function_names = []
 tmp_counter = 0
@@ -173,6 +248,13 @@ tmp_variable_number = 1  # Temporary variable Number.
 tmp_variables_list = list()  # A list with temporary variables. | T_1, T_2, T_3 … .
 ci_variables_list = list()  # A list with variables. | a, b, c … .
 
+scopes_list = list()  # A List with Scopes.
+
+main_program_start_tag = ''  # Used to generate the jump to main in the assembly file
+main_program_framelength = -1
+
+intermediate_code_flag = False
+
 
 # -------------------------------- #
 # |         Error Function       | #
@@ -182,7 +264,8 @@ def error(error_message, line_number, char_number):
     print(input_file.name, "::", "Line:", line_number, "::", "Char:", char_number, "::", "ERROR:", error_message)
     input_file.seek(0)
     input_file.close()
-    intermediate_code_file.close()
+    if intermediate_code_flag:
+        intermediate_code_file.close()
     exit(1)
 
 
@@ -214,7 +297,8 @@ def c_code_file_generator():
                 c_code_file.write('int ' + c_variable_line[:-2] + ';' + '\n\n')
             c_code_file.write('int main()\n{\n')
         elif quad.op == 'halt':
-            c_code_file.write('\tL_' + str(quad.tag) + ': {}' +  '  //(' + str(quad.op) + ', ' + str(quad.arg1) + ', ' + str(
+            c_code_file.write(
+                '\tL_' + str(quad.tag) + ': {}' + '  //(' + str(quad.op) + ', ' + str(quad.arg1) + ', ' + str(
                     quad.arg2) + ', ' + str(quad.res) + ')\n')
         elif quad.op == 'end_block':
             c_code_file.write('}')
@@ -247,7 +331,8 @@ def c_code_file_generator():
                     quad.op) + ', ' + str(quad.arg1) + ', ' + str(quad.arg2) + ', ' + str(quad.res) + ')\n')
         elif quad.op == 'out':
             c_code_file.write(
-                '\tL_' + str(quad.tag) + ': ' + 'printf(\"''%d\\n\"' + ', ' + str(quad.arg1) + ')' + ';' + '  //(' + str(
+                '\tL_' + str(quad.tag) + ': ' + 'printf(\"''%d\\n\"' + ', ' + str(
+                    quad.arg1) + ')' + ';' + '  //(' + str(
                     quad.op) + ', ' + str(quad.arg1) + ', ' + str(quad.arg2) + ', ' + str(quad.res) + ')\n')
         elif quad.op == 'retv':
             c_code_file.write(
@@ -273,6 +358,7 @@ def newtemp():
     global tmp_variable_number, tmp_variables_list
     new_tmp_variable = 'T_' + str(tmp_variable_number)
     tmp_variables_list.append(new_tmp_variable)
+    add_Tmp_Variable_Entity(new_tmp_variable)  # Symbol Table Function / Add Entity For Symbol Table.
     tmp_variable_number += 1
     return new_tmp_variable
 
@@ -297,6 +383,118 @@ def backpatch(tag_list, res):
     for i in range(quads_list_length):
         if quads_list[i].tag in tag_list:
             quads_list[i].res = res
+
+
+# --------------------------------- #
+# |          Final Code           | #
+# |          Functions            | #
+# --------------------------------- #
+
+
+# --------------------------------- #
+# |          Symbol Table         | #
+# |           Functions           | #
+# --------------------------------- #
+
+def add_new_scope():
+    if not scopes_list:  # If scopes list is empty add the "main" scope
+        new_Scope = Scope(0)  # Nesting Level 0
+        scopes_list.append(new_Scope)
+    else:  # If scopes list is not empty add the next scope with nestingLevel
+        last_Scope = scopes_list[-1]
+        new_Scope_nestingLevel = last_Scope.nestingLevel + 1
+        new_Scope = Scope(new_Scope_nestingLevel)
+        scopes_list.append(new_Scope)
+
+
+def remove_scope():
+    scopes_list.pop()
+
+
+def add_Variable_Entity(name):
+    nestingLevel = scopes_list[-1].nestingLevel
+    variable_offset = scopes_list[-1].get_next_offset()
+    # Check if variable entity already declared.
+    for entity in scopes_list[nestingLevel].entities_list:
+        if entity.name == name and entity.type == "Variable":
+            error('Variable \'%s\' is already declared.' % name, line_number, char_number)
+    # Check if variable entity is a subprogram parameter.
+    for entity in scopes_list[nestingLevel].entities_list:
+        if entity.name == name and entity.type == "Parameter":
+            error('Variable \'%s\' is a subprogram parameter. Cannot be redeclared.' % name, line_number, char_number)
+    # Add variable entity.
+    scopes_list[-1].entities_list.append(Variable_Entity(name, "Variable", variable_offset))
+
+
+def add_Function_Entity(name):
+    nestingLevel = scopes_list[-1].nestingLevel
+    # Check if variable entity already declared.
+    for entity in scopes_list[nestingLevel].entities_list:
+        if entity.name == name and entity.type == "Variable":
+            error('Variable \'%s\' is already declared.' % name, line_number, char_number)
+    scopes_list[-2].entities_list.append(Function_Entity(name, "Function", -1))  ##???
+
+
+def add_Parameter_Entity(name, parMode):
+    nestingLevel = scopes_list[-1].nestingLevel
+    parameter_offset = scopes_list[-1].get_next_offset()
+    # Check if variable entity already declared.
+    # for entity in scopes_list[nestingLevel].entities_list:
+    #    if entity.name == name and entity.type == "Variable":                                  # DES TO!!!!!
+    #        error('Variable \'%s\' is already declared.' % name, line_number, char_number)
+    if parMode == 'in':
+        scopes_list[-1].entities_list.append(Parameter_Entity(name, "Parameter", "CV", parameter_offset))
+    else:
+        scopes_list[-1].entities_list.append(Parameter_Entity(name, "Parameter", "REF", parameter_offset))
+
+
+def add_Tmp_Variable_Entity(tmp_variable):
+    tmp_variable_offset = scopes_list[-1].get_next_offset()
+    scopes_list[-1].entities_list.append(Tmp_Variable_Entity(tmp_variable, "Tmp_Variable", tmp_variable_offset))
+
+
+def add_Argument(parMode):
+    if parMode == 'in':
+        scopes_list[-2].entities_list[-1].arguments_list.append(Argument(parMode, 'CV'))
+        # if len(scopes_list[-2].entities_list[-1].arguments_list) >= 2:
+        #    scopes_list[-2].entities_list[-1].arguments_list[-2].set_next_arg(Argument(parMode,'CV'))
+    else:
+        scopes_list[-2].entities_list[-1].arguments_list.append(Argument(parMode, 'REF'))
+        # if len(scopes_list[-2].entities_list[-1].arguments_list) >= 2:
+        #    scopes_list[-2].entities_list[-1].arguments_list[-2].set_next_arg(Argument(parMode,'REF'))
+
+
+def search_entity(entity_name):
+    if not scopes_list:
+        return
+    for scope in scopes_list:  # Search until global scope
+        for entity in scope.entities_list:
+            if entity.name == entity_name:
+                return entity
+
+
+# Print Scopes.
+def print_scopes():
+    print("\nFunction Table:\n")
+    for scope in reversed(scopes_list):
+        print("| " + f"{bcolors.RED}Scope " + str(scope.nestingLevel) + f" {bcolors.ENDC}|")
+        for entity in scope.entities_list:
+            if isinstance(entity, Variable_Entity):
+                print("\t<---- [ " + f"{bcolors.BACKGROUND}" + entity.type + '/' + entity.name + '/offset:' + str(
+                    entity.offset) + f'{bcolors.ENDC} ]')
+            elif isinstance(entity, Function_Entity):
+                print("\t<---- [" + entity.type + '/' + entity.name + ']' + f"{bcolors.BLUE} -->{bcolors.ENDC}", end='')
+                for argument in entity.arguments_list:
+                    print(" " + argument.parMode + " ", end='')
+                print("")
+            elif isinstance(entity, Parameter_Entity):
+                print("\t<---- [" + entity.type + '/' + entity.name + '/offset:' + str(
+                    entity.offset) + '/parMode:' + entity.parMode + ']')
+            elif isinstance(entity, Tmp_Variable_Entity):
+                print("\t<---- [" + entity.type + '/' + entity.name + '/offset:' + str(entity.offset) + ']')
+
+    print('\n')
+    print('-' * 100 + '\n')
 
 
 # ---------------------------------- #
@@ -449,6 +647,7 @@ def program():
     if token.tk_type is TokenType.PROGRAM_TK:
         token = lex()
         if token.tk_type is TokenType.ID_TK:
+            add_new_scope()
             main_program_name = token.tk_string
             token = lex()
             block(main_program_name)
@@ -462,14 +661,20 @@ def program():
 
 
 def block(block_name):
-    global main_program_name
+    global main_program_name, scopes_list, main_program_start_tag, main_program_framelength
     declarations()
     subprograms()
     genquad("begin_block", block_name, "_", "_")
     statements()
-    if block_name == main_program_name:
+    if block_name is main_program_name:
         genquad("halt", "_", "_", "_")
     genquad("end_block", block_name, "_", "_")
+    if block_name is main_program_name:
+        main_program_framelength = scopes_list[-1].offset
+    else:
+        scopes_list[-2].entities_list[-1].framelength = scopes_list[-1].offset
+    print_scopes()
+    remove_scope()
 
 
 def declarations():
@@ -490,12 +695,16 @@ def subprograms():
             procedures_exists = True
             token = lex()
             procedureNames.append(token.tk_string)
+            add_new_scope()
+            add_Function_Entity(token.tk_string)
             subprogram()
             token = lex()
         elif token.tk_type is TokenType.FUNCTION_TK:
             has_return = True
             token = lex()
             function_names.append(token.tk_string)
+            add_new_scope()
+            add_Function_Entity(token.tk_string)
             subprogram()
             token = lex()
 
@@ -509,13 +718,15 @@ def subprogram():
         token = lex()
         if token.tk_type is TokenType.OPEN_PARENTHESIS_TK:
             formalparlist()
+            if token.tk_type is TokenType.CLOSE_PARENTHESIS_TK:
+                token = lex()
+                print(token.tk_string)
+                block(subprogram_name)
+            else:
+                error('Expected \')\' instead found: %s' % token.tk_string, line_number, char_number)
         else:
             error('Expected \'(\' instead found: %s' % token.tk_string, line_number, char_number)
-        if token.tk_type is TokenType.CLOSE_PARENTHESIS_TK:
-            token = lex()
-            block(subprogram_name)
-        else:
-            error('Expected \')\' instead found: %s' % token.tk_string, line_number, char_number)
+
     else:
         error('Expected ID instead of: %s' % token.tk_string, line_number, char_number)
 
@@ -523,12 +734,14 @@ def subprogram():
 def varlist():
     global token, ci_variables_list
     if token.tk_type is TokenType.ID_TK:
+        add_Variable_Entity(token.tk_string)
         ci_variables_list.append(token.tk_string)
         token = lex()
         while token.tk_type is TokenType.COMMA_TK:
             token = lex()
             if token.tk_type is not TokenType.ID_TK:
                 error("Expected variable declaration instead of '%s'." % token.tk_string, line_number, char_number)
+            add_Variable_Entity(token.tk_string)
             ci_variables_list.append(token.tk_string)
             token = lex()
 
@@ -537,20 +750,24 @@ def formalparlist():
     global token
     token = lex()
     if token.tk_type is TokenType.IN_TK or token.tk_type is TokenType.INOUT_TK:
+        parMode = token.tk_string
         token = lex()
-        formalparitem()
+        formalparitem(parMode)
         while token.tk_type is TokenType.COMMA_TK:
             token = lex()
             if token.tk_type is TokenType.IN_TK or token.tk_type is TokenType.INOUT_TK:
+                parMode = token.tk_string
                 token = lex()
-                formalparitem()
+                formalparitem(parMode)
             else:
                 error('Expected formal parameter declaration', line_number, char_number)
 
 
-def formalparitem():
+def formalparitem(parMode):
     global token
     if token.tk_type is TokenType.ID_TK:
+        add_Argument(parMode)
+        add_Parameter_Entity(token.tk_string, parMode)
         token = lex()
     else:
         error('Expected ID instead of: %s' % token.tk_string, line_number, char_number)
@@ -565,6 +782,7 @@ def statements():
             token = lex()
             statement()
         if token.tk_type is not TokenType.CLOSE_CURLY_BRACKET_TK:
+            print(token.tk_string)
             error('Expected statements end (\'}\') but found \'%s\' instead.' % token.tk_string, line_number,
                   char_number)
     else:
@@ -575,6 +793,8 @@ def statement():
     global token
     if token.tk_type is TokenType.ID_TK:
         var_id = token.tk_string
+        if search_entity(var_id) is None:
+            error('Undefined variable id \'%s\'.' % var_id, line_number, char_number)
         token = lex()
         assign_value = assignStat()
         genquad(":=", assign_value, "_", var_id)
@@ -734,6 +954,8 @@ def inputStat():
     if token.tk_type is TokenType.OPEN_PARENTHESIS_TK:
         token = lex()
         if token.tk_type is TokenType.ID_TK:
+            if search_entity(token.tk_string) is None:
+                error('Undefined variable id \'%s\'.' % token.tk_string, line_number, char_number)
             genquad('inp', token.tk_string, '_', '_')
             token = lex()
             if token.tk_type is TokenType.CLOSE_PARENTHESIS_TK:
@@ -762,6 +984,8 @@ def callStat():
     global token
     if token.tk_type is TokenType.ID_TK:
         proc_name = token.tk_string
+        if search_entity(proc_name) is None:
+            error('Undefined procedure \'%s\'.' % proc_name, line_number, char_number)
         token = lex()
         if token.tk_type is TokenType.OPEN_PARENTHESIS_TK:
             actualparlist()
@@ -958,6 +1182,8 @@ def factor():
         token = lex()
     elif token.tk_type is TokenType.ID_TK:
         factor_value = token.tk_string
+        if search_entity(factor_value) is None:
+            error('Undefined ID \'%s\'.' % factor_value, line_number, char_number)
         token = lex()
         id_list = idtail()
         if id_list is not None:
@@ -1002,6 +1228,8 @@ def actualparitem():
     elif token.tk_type is TokenType.INOUT_TK:
         token = lex()
         if token.tk_type is TokenType.ID_TK:
+            if search_entity(token.tk_string) is None:
+                error('Undefined Parameter Entity \'%s\'.' % token.tk_string, line_number, char_number)
             genquad('par', token.tk_string, 'REF', '_')
             token = lex()
         else:
@@ -1015,7 +1243,7 @@ def actualparitem():
 # -------------------------------- #
 
 def main(inputfile):
-    global input_file, intermediate_code_file, c_code_file
+    global input_file, intermediate_code_file, intermediate_code_flag, c_code_file
     global token, has_subprogram
 
     input_file = open(inputfile, 'r')
@@ -1025,6 +1253,7 @@ def main(inputfile):
     program()
 
     intermediate_code_file = open(inputfile[:-2] + 'int', 'w')
+    intermediate_code_flag = True
     intermediate_code_file_generator()
 
     if not has_subprogram:
@@ -1034,6 +1263,8 @@ def main(inputfile):
         c_code_file.close()
     else:
         print('Subprogram detected. C equivalent file creation aborted')
+
+    print('\nMain Program Framelength:' + str(main_program_framelength) + '\n')
 
     # Close Files
     input_file.close()
