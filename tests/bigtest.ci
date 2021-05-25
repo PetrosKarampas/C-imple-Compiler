@@ -14,26 +14,22 @@ program BigTest
 		b := 0;
 		c := 0;
 		input(x);
-		while (count1<a)
+		while (count<a)
 		{
-			if (not[count1<10] and not[c>500 or b < 190])
+			if (count<10)
 			{
-				count1 := count1 + 2;
+				count := count + 2;
 				b := b + 10;
 			}
 			else
 			{
-				count1 := count1 + 1;
+				count := count + 1;
 				c := c + 100;
 			};
 		};
 
 		forcase
-			case (x>100) 
-			{
-				b := b*110;
-				b := 69;
-			}
+			case (x>100) b := b*110;
 			case (x<100 and x>0) c:=c*100;
 			default a:=0;
 		;
