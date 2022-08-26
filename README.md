@@ -1,4 +1,4 @@
-#C-imple Compiler 
+# C-imple Compiler
 C-imple is a custom language developed for the purpose of this course.
 This project was created in three phases.
 ###		Phase One
