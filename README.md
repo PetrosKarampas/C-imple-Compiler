@@ -22,7 +22,7 @@ The compiler takes as imput .ci files (C-imple) and produces the folowing
 - `.asm`  Final code in assembly
 
 ## Python Version
-`v3.8`
+- `v3.8`
 
 ## Run
-cimple.py [file].ci
+- cimple.py [file].ci
