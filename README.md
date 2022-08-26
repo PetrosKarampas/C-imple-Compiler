@@ -25,4 +25,4 @@ The compiler takes as imput .ci files (C-imple) and produces the folowing
 `v3.8`
 
 ## Run
-cimple.py tests/[file].ci
+cimple.py [file].ci
