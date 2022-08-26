@@ -15,11 +15,11 @@ This project was created in three phases.
 
 ## Files
 The compiler takes as imput .ci files (C-imple) and produces the folowing
--  `.int`Intermediate code files
+-  `.int` Intermediate code files
 
--  `.c`Equivalent code in C programming language
+-  `.c`   Equivalent code in C programming language
 
-- `.asm`Final code in assembly
+- `.asm`  Final code in assembly
 
 ##Python Version
 `v3.8`
