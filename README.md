@@ -14,7 +14,7 @@ This project was developed in three phases.
 - Final code (ready to be assembled using MARS 4.5)
 
 ## Files
-The compiler takes as imput .ci files (C-imple) and produces the folowing
+The compiler takes as imput .ci files (C-imple) and produces the following
 -  `.int` Intermediate code files
 
 -  `.c`   Equivalent code in C programming language
